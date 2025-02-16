@@ -1,0 +1,32 @@
+# Binaries and build artifacts
+/bin/
+/build/
+*.exe
+*.out
+*.dll
+*.dylib
+*.so
+
+# Environment-specific files
+.env
+.env.*
+
+# macOS system files
+.DS_Store
+
+# Linux system files
+*.swp
+*.swo
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+
+# GoReleaser artifacts
+/dist/
