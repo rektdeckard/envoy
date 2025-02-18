@@ -1,4 +1,4 @@
-package service
+package envoy
 
 type Dimensioned struct {
 	Units string `json:"units"`

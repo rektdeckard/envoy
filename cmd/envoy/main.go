@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -13,37 +14,50 @@ import (
 	"github.com/rektdeckard/envoy/pkg/fedex"
 )
 
+var (
+	cfgFile string
+	rootCmd = &cobra.Command{
+		Use:   "envoy",
+		Short: "Envoy is a command line tool for tracking parcels",
+		Run:   TUI,
+	}
+)
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("Error loading .env file")
 		os.Exit(1)
 	}
-	cmd := &cobra.Command{
-		Use:   "envoy",
-		Short: "Envoy is a command line tool for tracking parcels",
-		Run:   tui,
-	}
 
-	cmd.AddCommand(&cobra.Command{
+	rootCmd.PersistentFlags().
+		StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cobra.yaml)")
+
+	rootCmd.AddCommand(&cobra.Command{
 		Use:        "track",
 		Short:      "Retrieves the current tracking status for one or more packages",
 		SuggestFor: []string{"tracking", "status"},
 		Args:       cobra.MinimumNArgs(1),
 		ArgAliases: []string{"tracking_number"},
-		Run:        track,
+		Run:        Track,
 	})
 
-	cmd.Execute()
+	rootCmd.Execute()
 }
 
-func tui(cmd *cobra.Command, args []string) {
-	groups := groupByCarrier(args)
-	RunTUI(groups)
+func TUI(cmd *cobra.Command, args []string) {
+	// TODO: use saved tracking numbers from DB
+	groups := groupByCarrier([]string{
+		"271278612814",
+		"281958973124",
+		"271198840120",
+		"271245206460",
+		"271163815798",
+	})
+	runTUI(groups)
 }
 
-func track(cmd *cobra.Command, args []string) {
+func Track(cmd *cobra.Command, args []string) {
 	groups := groupByCarrier(args)
-	fmt.Printf("%+v\n", groups)
 
 	var wg sync.WaitGroup
 
@@ -53,6 +67,7 @@ func track(cmd *cobra.Command, args []string) {
 		switch carrier {
 		case envoy.CarrierFedEx:
 			svc = fedex.NewFedexService(
+				&http.Client{},
 				os.Getenv("FEDEX_API_KEY"),
 				os.Getenv("FEDEX_API_SECRET"),
 			)

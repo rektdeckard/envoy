@@ -1,10 +1,13 @@
-package service
+package envoy
 
 import "time"
 
 type Parcel struct {
+	Name           string
+	Carrier        Carrier
 	TrackingNumber string
 	TrackingEvents []ParcelEvent
+	TrackingURL    string
 	Delivered      bool
 }
 
@@ -29,15 +32,15 @@ type ParcelEvent struct {
 	Timestamp   time.Time
 }
 
-type ParcelEventType int
+type ParcelEventType string
 
 const (
-	ParcelEventTypeOrderConfirmed ParcelEventType = iota
-	ParcelEventTypeAssertOnTime
-	ParcelEventTypePickedUp
-	ParcelEventTypeDeparted
-	ParcelEventTypeArrived
-	ParcelEventTypeOutForDelivery
-	ParcelEventTypeDelivered
-	ParcelEventTypeUnknown
+	ParcelEventTypeOrderConfirmed ParcelEventType = "ORDER CONFIRMED"
+	ParcelEventTypeAssertOnTime   ParcelEventType = "EXPECTED ON TIME"
+	ParcelEventTypePickedUp       ParcelEventType = "PICKED UP"
+	ParcelEventTypeDeparted       ParcelEventType = "DEPARTED"
+	ParcelEventTypeArrived        ParcelEventType = "ARRIVED"
+	ParcelEventTypeOutForDelivery ParcelEventType = "OUT FOR DELIVERY"
+	ParcelEventTypeDelivered      ParcelEventType = "DELIVERED"
+	ParcelEventTypeUnknown        ParcelEventType = "UNKNOWN"
 )

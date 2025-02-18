@@ -18,16 +18,18 @@ const (
 )
 
 type FedexService struct {
+	client    *http.Client
 	apiKey    string
 	apiSecret string
 	token     *token
 }
 
 // Enforce that FedexService implements the Service interface
-var _ service.Service = &FedexService{}
+var _ envoy.Service = &FedexService{}
 
-func NewFedexService(apiKey, apiSecret string) *FedexService {
+func NewFedexService(client *http.Client, apiKey, apiSecret string) *FedexService {
 	return &FedexService{
+		client:    client,
 		apiKey:    apiKey,
 		apiSecret: apiSecret,
 	}
@@ -73,7 +75,7 @@ func (s *FedexService) refreshToken() error {
 	return nil
 }
 
-func (s *FedexService) Track(trackingNumbers []string) ([]service.Parcel, error) {
+func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
 	const endpoint = "/track/v1/trackingnumbers"
 
 	if s.token == nil || !s.token.isValid() {
@@ -97,9 +99,8 @@ func (s *FedexService) Track(trackingNumbers []string) ([]service.Parcel, error)
 	req.Header.Set("Authorization", "Bearer "+s.token.value)
 	req.Header.Set("x-locale", "en_US")
 
-	client := &http.Client{}
 	// fmt.Printf("%+v\n\n", req)
-	res, err := client.Do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -123,10 +124,15 @@ func (s *FedexService) Track(trackingNumbers []string) ([]service.Parcel, error)
 	// d, _ := json.MarshalIndent(trackingRes, "", "  ")
 	// fmt.Println(string(d))
 
-	var parcels []service.Parcel
+	var parcels []envoy.Parcel
 	for _, r := range trackingRes.Output.CompleteTrackResults {
-		parcel := service.Parcel{
+		parcel := envoy.Parcel{
+			Carrier:        envoy.CarrierFedEx,
 			TrackingNumber: r.TrackingNumer,
+			TrackingURL: fmt.Sprintf(
+				"https://www.fedex.com/apps/fedextrack/?tracknumbers=%s",
+				r.TrackingNumer,
+			),
 		}
 
 		for _, r := range r.TrackResults {
@@ -138,13 +144,16 @@ func (s *FedexService) Track(trackingNumbers []string) ([]service.Parcel, error)
 				if lastEvent == nil || e.Date.Time.After(lastEvent.Date.Time) {
 					lastEvent = e
 				}
+				if e.EventType == "DL" {
+					parcel.Delivered = true
+				}
+				parcel.TrackingEvents = append(parcel.TrackingEvents, envoy.ParcelEvent{
+					Timestamp:   e.Date.Time,
+					Description: e.EventDescription,
+					Location:    e.ScanLocation.String(),
+					Type:        e.EventType.ParcelEventType(),
+				})
 			}
-			parcel.TrackingEvents = append(parcel.TrackingEvents, service.ParcelEvent{
-				Timestamp:   lastEvent.Date.Time,
-				Description: lastEvent.EventDescription,
-				Location:    lastEvent.ScanLocation.String(),
-				Type:        r.LastStatusDetail.ParcelEventType(),
-			})
 		}
 
 		parcels = append(parcels, parcel)
@@ -209,7 +218,7 @@ type completeTrackResult struct {
 type trackResults struct {
 	TrackingNumberInfo          *trackingNumberInfo     `json:"trackingNumberInfo"`
 	AdditionalTrackingInfo      *additionalTrackingInfo `json:"additionalTrackingInfo"`
-	DistanceToDestination       service.Dimensioned     `json:"distanceToDestination"`
+	DistanceToDestination       envoy.Dimensioned       `json:"distanceToDestination"`
 	ConsolidationDetail         []*consolidationDetail  `json:"consolidationDetail"`
 	MeterNumber                 string                  `json:"meterNumber"`
 	ReturnDetail                *returnDetail           `json:"returnDetail"`
@@ -245,11 +254,11 @@ type trackResults struct {
 }
 
 type shipmentDetails struct {
-	Contents               []*shipmentContent    `json:"contents"`
-	BeforePossessionStatus bool                  `json:"beforePossessionStatus"`
-	Weight                 []service.Dimensioned `json:"weight"`
-	ContentPieceCount      string                `json:"contentPieceCount"`
-	SplitShipments         []*splitShipment      `json:"splitShipments"`
+	Contents               []*shipmentContent  `json:"contents"`
+	BeforePossessionStatus bool                `json:"beforePossessionStatus"`
+	Weight                 []envoy.Dimensioned `json:"weight"`
+	ContentPieceCount      string              `json:"contentPieceCount"`
+	SplitShipments         []*splitShipment    `json:"splitShipments"`
 }
 
 type splitShipment struct {
@@ -414,27 +423,29 @@ type statusDetail struct {
 	DelayDetail      *delayDetail       `json:"delayDetail"`
 }
 
-func (d *statusDetail) ParcelEventType() service.ParcelEventType {
+type eventType string
+
+func (d *eventType) ParcelEventType() envoy.ParcelEventType {
 	if d == nil {
-		return service.ParcelEventTypeUnknown
+		return envoy.ParcelEventTypeUnknown
 	}
-	switch d.Code {
+	switch string(*d) {
 	case "OC":
-		return service.ParcelEventTypeOrderConfirmed
+		return envoy.ParcelEventTypeOrderConfirmed
 	case "PU":
-		return service.ParcelEventTypePickedUp
+		return envoy.ParcelEventTypePickedUp
 	case "AO":
-		return service.ParcelEventTypeAssertOnTime
+		return envoy.ParcelEventTypeAssertOnTime
 	case "DP":
-		return service.ParcelEventTypeDeparted
+		return envoy.ParcelEventTypeDeparted
 	case "AR":
-		return service.ParcelEventTypeArrived
+		return envoy.ParcelEventTypeArrived
 	case "OD":
-		return service.ParcelEventTypeOutForDelivery
+		return envoy.ParcelEventTypeOutForDelivery
 	case "DL":
-		return service.ParcelEventTypeDelivered
+		return envoy.ParcelEventTypeDelivered
 	default:
-		return service.ParcelEventTypeUnknown
+		return envoy.ParcelEventTypeUnknown
 	}
 }
 
@@ -450,7 +461,30 @@ type address struct {
 }
 
 func (a *address) String() string {
-	return fmt.Sprintf("%s, %s %s", a.City, a.StateOrProvinceCode, a.PostalCode)
+	sb := strings.Builder{}
+	if a.City != "" {
+		sb.WriteString(a.City)
+		if a.StateOrProvinceCode != "" {
+			sb.WriteString(", ")
+		}
+	}
+	sb.WriteString(a.StateOrProvinceCode)
+	if a.PostalCode != "" {
+		if sb.Len() > 0 {
+			sb.WriteString(" ")
+		}
+		sb.WriteString(a.PostalCode)
+	}
+	if a.CountryCode != "US" {
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(a.CountryCode)
+	}
+	if sb.Len() == 0 {
+		return "—"
+	}
+	return strings.ToUpper(sb.String())
 }
 
 type ancillaryDetail struct {
@@ -522,9 +556,9 @@ type informationNote struct {
 }
 
 type errorInfo struct {
-	Code          string           `json:"code"`
-	ParameterList []*service.Entry `json:"parameterList"`
-	Message       string           `json:"message"`
+	Code          string         `json:"code"`
+	ParameterList []*envoy.Entry `json:"parameterList"`
+	Message       string         `json:"message"`
 }
 
 type specialHandling struct {
@@ -611,7 +645,7 @@ type scanEvent struct {
 	LocationType         scanLocationType `json:"locationType"`
 	ExceptionDescription string           `json:"exceptionDescription"`
 	EventDescription     string           `json:"eventDescription"`
-	EventType            string           `json:"eventType"`
+	EventType            eventType        `json:"eventType"`
 	DerivedStatusCode    string           `json:"derivedStatusCode"`
 	ExceptionCode        string           `json:"exceptionCode"`
 	DelayDetail          *delayDetail     `json:"delayDetail"`
@@ -719,7 +753,7 @@ type packageDetails struct {
 	ContentPieceCount     string                `json:"contentPieceCount"`
 	UndeliveredCount      string                `json:"undeliveredCount"`
 	WeightAndDimensions   *weightAndDimensions  `json:"weightAndDimensions"`
-	DeclaredValue         service.Value         `json:"declaredValue"`
+	DeclaredValue         envoy.Value           `json:"declaredValue"`
 }
 
 type physicalPackagingType string
@@ -780,8 +814,8 @@ const (
 )
 
 type weightAndDimensions struct {
-	Weight     []service.Dimensioned `json:"weight"`
-	Dimensions []service.Size        `json:"dimensions"`
+	Weight     []envoy.Dimensioned `json:"weight"`
+	Dimensions []envoy.Size        `json:"dimensions"`
 }
 
 type location struct {
