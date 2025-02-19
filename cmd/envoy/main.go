@@ -12,6 +12,7 @@ import (
 
 	envoy "github.com/rektdeckard/envoy/pkg"
 	"github.com/rektdeckard/envoy/pkg/fedex"
+	"github.com/rektdeckard/envoy/pkg/ups"
 )
 
 var (
@@ -52,6 +53,7 @@ func TUI(cmd *cobra.Command, args []string) {
 		"271198840120",
 		"271245206460",
 		"271163815798",
+		"1ZW701150378674373",
 	})
 	runTUI(groups)
 }
@@ -70,6 +72,12 @@ func Track(cmd *cobra.Command, args []string) {
 				&http.Client{},
 				os.Getenv("FEDEX_API_KEY"),
 				os.Getenv("FEDEX_API_SECRET"),
+			)
+		case envoy.CarrierUPS:
+			svc = ups.NewUPSService(
+				&http.Client{},
+				os.Getenv("UPS_API_KEY"),
+				os.Getenv("UPS_API_SECRET"),
 			)
 		default:
 			fmt.Printf("Unsupported carrier: %v\n", carrier)

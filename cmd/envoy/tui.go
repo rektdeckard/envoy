@@ -17,6 +17,7 @@ import (
 
 	"github.com/rektdeckard/envoy/pkg"
 	"github.com/rektdeckard/envoy/pkg/fedex"
+	"github.com/rektdeckard/envoy/pkg/ups"
 )
 
 const (
@@ -64,6 +65,13 @@ func runTUI(groups map[envoy.Carrier][]string) {
 				os.Getenv("FEDEX_API_KEY"),
 				os.Getenv("FEDEX_API_SECRET"),
 			)
+		case envoy.CarrierUPS:
+			svc = ups.NewUPSService(
+				&http.Client{},
+				os.Getenv("UPS_CLIENT_ID"),
+				os.Getenv("UPS_CLIENT_SECRET"),
+			)
+
 		default:
 			fmt.Printf("Unsupported carrier: %v\n", carrier)
 			os.Exit(1)
