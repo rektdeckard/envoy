@@ -14,14 +14,14 @@ import (
 )
 
 const (
-	baseURL = "https://apis.fedex.com"
+	BaseURL = "https://apis.fedex.com"
 )
 
 type FedexService struct {
-	client    *http.Client
-	apiKey    string
-	apiSecret string
-	token     *token
+	Client    *http.Client
+	APIKey    string
+	APISecret string
+	Token     *Token
 }
 
 // Enforce that FedexService implements the Service interface
@@ -29,21 +29,21 @@ var _ envoy.Service = &FedexService{}
 
 func NewFedexService(client *http.Client, apiKey, apiSecret string) *FedexService {
 	return &FedexService{
-		client:    client,
-		apiKey:    apiKey,
-		apiSecret: apiSecret,
+		Client:    client,
+		APIKey:    apiKey,
+		APISecret: apiSecret,
 	}
 }
 
-func (s *FedexService) refreshToken() error {
+func (s *FedexService) RefreshToken() error {
 	const endpoint = "/oauth/token"
 
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")
-	data.Set("client_id", s.apiKey)
-	data.Set("client_secret", s.apiSecret)
+	data.Set("client_id", s.APIKey)
+	data.Set("client_secret", s.APISecret)
 
-	req, err := http.NewRequest("POST", baseURL+endpoint, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", BaseURL+endpoint, strings.NewReader(data.Encode()))
 	if err != nil {
 		return err
 	}
@@ -66,20 +66,20 @@ func (s *FedexService) refreshToken() error {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 
-	var token token
+	var token Token
 	if err := json.Unmarshal(body, &token); err != nil {
 		return err
 	}
 
-	s.token = &token
+	s.Token = &token
 	return nil
 }
 
-func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
+func (s *FedexService) TrackRaw(trackingNumbers []string) (*TrackingResponse, error) {
 	const endpoint = "/track/v1/trackingnumbers"
 
-	if s.token == nil || !s.token.isValid() {
-		if err := s.refreshToken(); err != nil {
+	if s.Token == nil || !s.Token.IsValid() {
+		if err := s.RefreshToken(); err != nil {
 			return nil, err
 		}
 	}
@@ -90,17 +90,16 @@ func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", baseURL+endpoint, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest(http.MethodPost, BaseURL+endpoint, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.token.value)
+	req.Header.Set("Authorization", "Bearer "+s.Token.Value)
 	req.Header.Set("x-locale", "en_US")
 
-	// fmt.Printf("%+v\n\n", req)
-	res, err := s.client.Do(req)
+	res, err := s.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -111,18 +110,23 @@ func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
 	if err != nil {
 		return nil, err
 	}
-	// fmt.Println(string(body))
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 
-	var trackingRes trackingResponse
+	var trackingRes TrackingResponse
 	if err := json.Unmarshal(body, &trackingRes); err != nil {
 		return nil, err
 	}
-	// d, _ := json.MarshalIndent(trackingRes, "", "  ")
-	// fmt.Println(string(d))
+	return &trackingRes, nil
+}
+
+func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
+	trackingRes, err := s.TrackRaw(trackingNumbers)
+	if err != nil {
+		return nil, err
+	}
 
 	var parcels []envoy.Parcel
 	for _, r := range trackingRes.Output.CompleteTrackResults {
@@ -139,7 +143,7 @@ func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
 			if r.ScanEvents == nil || len(r.ScanEvents) == 0 {
 				continue
 			}
-			var lastEvent *scanEvent
+			var lastEvent *ScanEvent
 			for _, e := range r.ScanEvents {
 				if lastEvent == nil || e.Date.Time.After(lastEvent.Date.Time) {
 					lastEvent = e
@@ -170,10 +174,10 @@ type trackingRequest struct {
 type trackingInfo struct {
 	ShipDateBegin      string              `json:"shipDateBegin,omitempty"`
 	ShipDateEnd        string              `json:"shipDateEnd,omitempty"`
-	TrackingNumberInfo *trackingNumberInfo `json:"trackingNumberInfo"`
+	TrackingNumberInfo *TrackingNumberInfo `json:"trackingNumberInfo"`
 }
 
-type trackingNumberInfo struct {
+type TrackingNumberInfo struct {
 	TrackingNumber         string `json:"trackingNumber"`
 	CarrierCode            string `json:"carrierCode,omitempty"`
 	TrackingNumberUniqueId string `json:"trackingNumberUniqueId,omitempty"`
@@ -188,7 +192,7 @@ func newTrackingRequest(trackingNumbers []string) *trackingRequest {
 		tr.TrackingInfo = append(tr.TrackingInfo, &trackingInfo{
 			// ShipDateBegin: "2021-01-01",
 			// ShipDateEnd:   "2021-12-31",
-			TrackingNumberInfo: &trackingNumberInfo{
+			TrackingNumberInfo: &TrackingNumberInfo{
 				TrackingNumber: tn,
 				// CarrierCode:    "FDXE",
 			},
@@ -199,233 +203,233 @@ func newTrackingRequest(trackingNumbers []string) *trackingRequest {
 }
 
 // https://developer.fedex.com/api/en-us/catalog/track/v1/docs.html#operation/Track%20by%20Tracking%20Number
-type trackingResponse struct {
+type TrackingResponse struct {
 	TransactionId         string          `json:"transactionId"`
 	CustomerTransactionId string          `json:"customerTransactionId"`
-	Output                *trackingOutput `json:"output"`
+	Output                *TrackingOutput `json:"output"`
 }
 
-type trackingOutput struct {
-	CompleteTrackResults []*completeTrackResult `json:"completeTrackResults"`
-	Alerts               []*alert               `json:"alerts"`
+type TrackingOutput struct {
+	CompleteTrackResults []*CompleteTrackResult `json:"completeTrackResults"`
+	Alerts               []*Alert               `json:"alerts"`
 }
 
-type completeTrackResult struct {
+type CompleteTrackResult struct {
 	TrackingNumer string          `json:"trackingNumber"`
-	TrackResults  []*trackResults `json:"trackResults"`
+	TrackResults  []*TrackResults `json:"trackResults"`
 }
 
-type trackResults struct {
-	TrackingNumberInfo          *trackingNumberInfo     `json:"trackingNumberInfo"`
-	AdditionalTrackingInfo      *additionalTrackingInfo `json:"additionalTrackingInfo"`
+type TrackResults struct {
+	TrackingNumberInfo          *TrackingNumberInfo     `json:"trackingNumberInfo"`
+	AdditionalTrackingInfo      *AdditionalTrackingInfo `json:"additionalTrackingInfo"`
 	DistanceToDestination       envoy.Dimensioned       `json:"distanceToDestination"`
-	ConsolidationDetail         []*consolidationDetail  `json:"consolidationDetail"`
+	ConsolidationDetail         []*ConsolidationDetail  `json:"consolidationDetail"`
 	MeterNumber                 string                  `json:"meterNumber"`
-	ReturnDetail                *returnDetail           `json:"returnDetail"`
-	ServiceDetail               *serviceDetail          `json:"serviceDetail"`
-	DestinationLocation         *destinationLocation    `json:"destinationLocation"`
-	LastStatusDetail            *statusDetail           `json:"lastStatusDetail"`
-	ServiceCommitMessage        serviceCommitMessage    `json:"serviceCommitMessage"`
-	InformationNotes            []*informationNote      `json:"informationNotes"`
-	Error                       *errorInfo              `json:"error"`
-	SpecialHandlings            []*specialHandling      `json:"specialHandlings"`
-	AvailableImages             []*availableImage       `json:"availableImages"`
-	DeliveryDetails             *deliveryDetails        `json:"deliveryDetails"`
-	ScanEvents                  []*scanEvent            `json:"scanEvents"`
-	DateAndTimes                []*dateAndTime          `json:"dateAndTimes"`
-	PackageDetails              *packageDetails         `json:"packageDetails"`
+	ReturnDetail                *ReturnDetail           `json:"returnDetail"`
+	ServiceDetail               *ServiceDetail          `json:"serviceDetail"`
+	DestinationLocation         *DestinationLocation    `json:"destinationLocation"`
+	LastStatusDetail            *StatusDetail           `json:"lastStatusDetail"`
+	ServiceCommitMessage        ServiceCommitMessage    `json:"serviceCommitMessage"`
+	InformationNotes            []*InformationNote      `json:"informationNotes"`
+	Error                       *ErrorInfo              `json:"error"`
+	SpecialHandlings            []*SpecialHandling      `json:"specialHandlings"`
+	AvailableImages             []*AvailableImage       `json:"availableImages"`
+	DeliveryDetails             *DeliveryDetails        `json:"deliveryDetails"`
+	ScanEvents                  []*ScanEvent            `json:"scanEvents"`
+	DateAndTimes                []*DateAndTime          `json:"dateAndTimes"`
+	PackageDetails              *PackageDetails         `json:"packageDetails"`
 	GoodsClassificationCode     string                  `json:"goodsClassificationCode"`
-	HoldAtLocation              *location               `json:"holdAtLocation"`
-	CustomDeliveryOptions       []*customDeliveryOption `json:"customDeliveryOptions"`
-	EstimatedDeliveryTimeWindow *deliveryWindow         `json:"estimatedDeliveryTimeWindow"`
-	PieceCounts                 []*pieceCount           `json:"pieceCounts"`
-	OriginLocation              *location               `json:"originLocation"`
+	HoldAtLocation              *Location               `json:"holdAtLocation"`
+	CustomDeliveryOptions       []*CustomDeliveryOption `json:"customDeliveryOptions"`
+	EstimatedDeliveryTimeWindow *DeliveryWindow         `json:"estimatedDeliveryTimeWindow"`
+	PieceCounts                 []*PieceCount           `json:"pieceCounts"`
+	OriginLocation              *Location               `json:"originLocation"`
 	RecipientInformation        struct {
-		Address address `json:"address"`
+		Address Address `json:"address"`
 	} `json:"recipientInformation"`
-	StandardTransitTimeWindow *deliveryWindow  `json:"standardTransitTimeWindow"`
-	ShipmentDetails           *shipmentDetails `json:"shipmentDetails"`
-	ReasonDetail              *reasonDetail    `json:"reasonDetail"`
+	StandardTransitTimeWindow *DeliveryWindow  `json:"standardTransitTimeWindow"`
+	ShipmentDetails           *ShipmentDetails `json:"shipmentDetails"`
+	ReasonDetail              *ReasonDetail    `json:"reasonDetail"`
 	AvailableNotifications    []string         `json:"availableNotifications"`
 	ShipperInformation        struct {
-		Address address `json:"address"`
+		Address Address `json:"address"`
 	} `json:"shipperInformation"`
-	LastUpdatedDestinationAddress *address `json:"lastUpdatedDestinationAddress"`
+	LastUpdatedDestinationAddress *Address `json:"lastUpdatedDestinationAddress"`
 }
 
-type shipmentDetails struct {
-	Contents               []*shipmentContent  `json:"contents"`
+type ShipmentDetails struct {
+	Contents               []*ShipmentContent  `json:"contents"`
 	BeforePossessionStatus bool                `json:"beforePossessionStatus"`
 	Weight                 []envoy.Dimensioned `json:"weight"`
 	ContentPieceCount      string              `json:"contentPieceCount"`
-	SplitShipments         []*splitShipment    `json:"splitShipments"`
+	SplitShipments         []*SplitShipment    `json:"splitShipments"`
 }
 
-type splitShipment struct {
+type SplitShipment struct {
 	PieceCount        string    `json:"pieceCount"`
 	StatusDescription string    `json:"statusDescription"`
 	Timestamp         time.Time `json:"timestamp"`
 	StatusCode        string    `json:"statusCode"`
 }
 
-type shipmentContent struct {
+type ShipmentContent struct {
 	ItemNumber       string `json:"itemNumber"`
 	ReceivedQuantity string `json:"receivedQuantity"`
 	Description      string `json:"description"`
 	PartNumber       string `json:"partNumber"`
 }
 
-type additionalTrackingInfo struct {
+type AdditionalTrackingInfo struct {
 	HasAssociatedShipments bool                 `json:"hasAssociatedShipments"`
 	Nickname               string               `json:"nickname"`
-	PackageIdentifiers     []*packageIdentifier `json:"packageIdentifiers"`
+	PackageIdentifiers     []*PackageIdentifier `json:"packageIdentifiers"`
 	ShipmentNotes          string               `json:"shipmentNotes"`
 }
 
-type packageIdentifier struct {
-	Type                   packageIdentifierType `json:"type"`
+type PackageIdentifier struct {
+	Type                   PackageIdentifierType `json:"type"`
 	Values                 []string              `json:"values"`
 	TrackingNumberUniqueId string                `json:"trackingNumberUniqueId"`
 }
 
-type packageIdentifierType string
+type PackageIdentifierType string
 
 const (
-	packageIdentifierTypeBillOfLading                    packageIdentifierType = "BILL_OF_LADING"
-	packageIdentifierTypeCodReturnTrackingNumber         packageIdentifierType = "COD_RETURN_TRACKING_NUMBER"
-	packageIdentifierTypeCustomerAuthorizationNumber     packageIdentifierType = "CUSTOMER_AUTHORIZATION_NUMBER"
-	packageIdentifierTypeCustomerReference               packageIdentifierType = "CUSTOMER_REFERENCE"
-	packageIdentifierTypeDepartment                      packageIdentifierType = "DEPARTMENT"
-	packageIdentifierTypeDocumentAirwayBill              packageIdentifierType = "DOCUMENT_AIRWAY_BILL"
-	packageIdentifierTypeExpressAlternateReference       packageIdentifierType = "EXPRESS_ALTERNATE_REFERENCE"
-	packageIdentifierTypeFedexOfficeJobOrderNumber       packageIdentifierType = "FEDEX_OFFICE_JOB_ORDER_NUMBER"
-	packageIdentifierTypeFreeFormReference               packageIdentifierType = "FREE_FORM_REFERENCE"
-	packageIdentifierTypeGroundInternational             packageIdentifierType = "GROUND_INTERNATIONAL"
-	packageIdentifierTypeGroundShipmentID                packageIdentifierType = "GROUND_SHIPMENT_ID"
-	packageIdentifierTypeGroupMPS                        packageIdentifierType = "GROUP_MPS"
-	packageIdentifierTypeInternationalDistribution       packageIdentifierType = "INTERNATIONAL_DISTRIBUTION"
-	packageIdentifierTypeInvoice                         packageIdentifierType = "INVOICE"
-	packageIdentifierTypeJobGlobalTrackingNumber         packageIdentifierType = "JOB_GLOBAL_TRACKING_NUMBER"
-	packageIdentifierTypeOrderGlobalTrackingNumber       packageIdentifierType = "ORDER_GLOBAL_TRACKING_NUMBER"
-	packageIdentifierTypeOrderToPayNumber                packageIdentifierType = "ORDER_TO_PAY_NUMBER"
-	packageIdentifierTypeOutboundLinkToReturn            packageIdentifierType = "OUTBOUND_LINK_TO_RETURN"
-	packageIdentifierTypePartNumber                      packageIdentifierType = "PART_NUMBER"
-	packageIdentifierTypePartnerCarrierNumber            packageIdentifierType = "PARTNER_CARRIER_NUMBER"
-	packageIdentifierTypePurchaseOrder                   packageIdentifierType = "PURCHASE_ORDER"
-	packageIdentifierTypeRerouteTrackingNumber           packageIdentifierType = "REROUTE_TRACKING_NUMBER"
-	packageIdentifierTypeReturnMaterialsAuthorization    packageIdentifierType = "RETURN_MATERIALS_AUTHORIZATION"
-	packageIdentifierTypeReturnedToShipperTrackingNumber packageIdentifierType = "RETURNED_TO_SHIPPER_TRACKING_NUMBER"
-	packageIdentifierTypeShipperReference                packageIdentifierType = "SHIPPER_REFERENCE"
-	packageIdentifierTypeStandardMPS                     packageIdentifierType = "STANDARD_MPS"
-	packageIdentifierTypeTrackingControlNumber           packageIdentifierType = "TRACKING_CONTROL_NUMBER"
-	packageIdentifierTypeTrackingNumberOrDoorTag         packageIdentifierType = "TRACKING_NUMBER_OR_DOORTAG"
-	packageIdentifierTypeTransborderDistribution         packageIdentifierType = "TRANSBORDER_DISTRIBUTION"
-	packageIdentifierTypeTransportationControlNumber     packageIdentifierType = "TRANSPORTATION_CONTROL_NUMBER"
-	packageIdentifierTypeVirtualConsolidation            packageIdentifierType = "VIRTUAL_CONSOLIDATION"
+	PackageIdentifierTypeBillOfLading                    PackageIdentifierType = "BILL_OF_LADING"
+	PackageIdentifierTypeCodReturnTrackingNumber         PackageIdentifierType = "COD_RETURN_TRACKING_NUMBER"
+	PackageIdentifierTypeCustomerAuthorizationNumber     PackageIdentifierType = "CUSTOMER_AUTHORIZATION_NUMBER"
+	PackageIdentifierTypeCustomerReference               PackageIdentifierType = "CUSTOMER_REFERENCE"
+	PackageIdentifierTypeDepartment                      PackageIdentifierType = "DEPARTMENT"
+	PackageIdentifierTypeDocumentAirwayBill              PackageIdentifierType = "DOCUMENT_AIRWAY_BILL"
+	PackageIdentifierTypeExpressAlternateReference       PackageIdentifierType = "EXPRESS_ALTERNATE_REFERENCE"
+	PackageIdentifierTypeFedexOfficeJobOrderNumber       PackageIdentifierType = "FEDEX_OFFICE_JOB_ORDER_NUMBER"
+	PackageIdentifierTypeFreeFormReference               PackageIdentifierType = "FREE_FORM_REFERENCE"
+	PackageIdentifierTypeGroundInternational             PackageIdentifierType = "GROUND_INTERNATIONAL"
+	PackageIdentifierTypeGroundShipmentID                PackageIdentifierType = "GROUND_SHIPMENT_ID"
+	PackageIdentifierTypeGroupMPS                        PackageIdentifierType = "GROUP_MPS"
+	PackageIdentifierTypeInternationalDistribution       PackageIdentifierType = "INTERNATIONAL_DISTRIBUTION"
+	PackageIdentifierTypeInvoice                         PackageIdentifierType = "INVOICE"
+	PackageIdentifierTypeJobGlobalTrackingNumber         PackageIdentifierType = "JOB_GLOBAL_TRACKING_NUMBER"
+	PackageIdentifierTypeOrderGlobalTrackingNumber       PackageIdentifierType = "ORDER_GLOBAL_TRACKING_NUMBER"
+	PackageIdentifierTypeOrderToPayNumber                PackageIdentifierType = "ORDER_TO_PAY_NUMBER"
+	PackageIdentifierTypeOutboundLinkToReturn            PackageIdentifierType = "OUTBOUND_LINK_TO_RETURN"
+	PackageIdentifierTypePartNumber                      PackageIdentifierType = "PART_NUMBER"
+	PackageIdentifierTypePartnerCarrierNumber            PackageIdentifierType = "PARTNER_CARRIER_NUMBER"
+	PackageIdentifierTypePurchaseOrder                   PackageIdentifierType = "PURCHASE_ORDER"
+	PackageIdentifierTypeRerouteTrackingNumber           PackageIdentifierType = "REROUTE_TRACKING_NUMBER"
+	PackageIdentifierTypeReturnMaterialsAuthorization    PackageIdentifierType = "RETURN_MATERIALS_AUTHORIZATION"
+	PackageIdentifierTypeReturnedToShipperTrackingNumber PackageIdentifierType = "RETURNED_TO_SHIPPER_TRACKING_NUMBER"
+	PackageIdentifierTypeShipperReference                PackageIdentifierType = "SHIPPER_REFERENCE"
+	PackageIdentifierTypeStandardMPS                     PackageIdentifierType = "STANDARD_MPS"
+	PackageIdentifierTypeTrackingControlNumber           PackageIdentifierType = "TRACKING_CONTROL_NUMBER"
+	PackageIdentifierTypeTrackingNumberOrDoorTag         PackageIdentifierType = "TRACKING_NUMBER_OR_DOORTAG"
+	PackageIdentifierTypeTransborderDistribution         PackageIdentifierType = "TRANSBORDER_DISTRIBUTION"
+	PackageIdentifierTypeTransportationControlNumber     PackageIdentifierType = "TRANSPORTATION_CONTROL_NUMBER"
+	PackageIdentifierTypeVirtualConsolidation            PackageIdentifierType = "VIRTUAL_CONSOLIDATION"
 )
 
-type consolidationDetail struct {
+type ConsolidationDetail struct {
 	TimeStamp       time.Time              `json:"timeStamp"`
 	ConsolidationId string                 `json:"consolidationId"`
-	ReasonDetail    reasonDetail           `json:"reasonDetail"`
+	ReasonDetail    ReasonDetail           `json:"reasonDetail"`
 	PackageCount    int                    `json:"packageCount"`
-	EventType       consolidationEventType `json:"eventType"`
+	EventType       ConsolidationEventType `json:"eventType"`
 }
 
-type consolidationEventType string
+type ConsolidationEventType string
 
 const (
-	consolidationEventTypeAdded    consolidationEventType = "ADDED_TO_CONSOLIDATION"
-	consolidationEventTypeRemoved  consolidationEventType = "REMOVED_FROM_CONSOLIDATION"
-	consolidationEventTypeExcluded consolidationEventType = "EXCLUDED_FROM_CONSOLIDATION"
+	ConsolidationEventTypeAdded    ConsolidationEventType = "ADDED_TO_CONSOLIDATION"
+	ConsolidationEventTypeRemoved  ConsolidationEventType = "REMOVED_FROM_CONSOLIDATION"
+	ConsolidationEventTypeExcluded ConsolidationEventType = "EXCLUDED_FROM_CONSOLIDATION"
 )
 
-type reasonDetail struct {
+type ReasonDetail struct {
 	Description string `json:"description"`
 	Type        string `json:"type"`
 }
 
-type returnDetail struct {
+type ReturnDetail struct {
 	AuthorizationName string       `json:"authorizationName"`
-	ReasonDetail      reasonDetail `json:"reasonDetail"`
+	ReasonDetail      ReasonDetail `json:"reasonDetail"`
 }
 
-type serviceDetail struct {
+type ServiceDetail struct {
 	Description      string      `json:"description"`
 	ShortDescription string      `json:"shortDescription"`
-	Type             serviceType `json:"type"`
+	Type             ServiceType `json:"type"`
 }
 
-type serviceType string
+type ServiceType string
 
 // https://developer.fedex.com/api/en-us/guides/api-reference.html#servicetypes
 const (
-	serviceTypeFedexInternationalPriorityExpress      serviceType = "FEDEX_INTERNATIONAL_PRIORITY_EXPRESS"
-	serviceTypeFedexInternationalFirst                serviceType = "FEDEX_INTERNATIONAL_FIRST"
-	serviceTypeFedexInternationalPriority             serviceType = "FEDEX_INTERNATIONAL_PRIORITY"
-	serviceTypeFedexInternationalEconomy              serviceType = "INTERNATIONAL_ECONOMY"
-	serviceTypeFedexGround                            serviceType = "FEDEX_GROUND"
-	serviceTypeFedexFirstOvernight                    serviceType = "FIRST_OVERNIGHT"
-	serviceTypeFedexFirstOvernightFreight             serviceType = "FEDEX_FIRST_FREIGHT"
-	serviceTypeFedex1DayFreight                       serviceType = "FEDEX_1_DAY_FREIGHT"
-	serviceTypeFedex2DayFreight                       serviceType = "FEDEX_2_DAY_FREIGHT"
-	serviceTypeFedex3DayFreight                       serviceType = "FEDEX_3_DAY_FREIGHT"
-	serviceTypeFedexInternationalPriorityFreight      serviceType = "INTERNATIONAL_PRIORITY_FREIGHT"
-	serviceTypeFedexInternationalEconomyFreight       serviceType = "INTERNATIONAL_ECONOMY_FREIGHT"
-	serviceTypeFedexInternationalDeferredFreight      serviceType = "FEDEX_INTERNATIONAL_DEFERRED_FREIGHT"
-	serviceTypeFedexInternationalPriorityDistribution serviceType = "INTERNATIONAL_PRIORITY_DISTRIBUTION"
-	serviceTypeFedexInternationalDistributionFreight  serviceType = "INTERNATIONAL_DISTRIBUTION_FREIGHT"
-	serviceTypeInternationalGroundDistribution        serviceType = "INTL_GROUND_DISTRIBUTION"
-	serviceTypeFedexHomeDelivery                      serviceType = "GROUND_HOME_DELIVERY"
-	serviceTypeFedexGroundEconomy                     serviceType = "SMART_POST"
-	serviceTypeFedexPriorityOvernight                 serviceType = "PRIORITY_OVERNIGHT"
-	serviceTypeFedexStandardOvernight                 serviceType = "STANDARD_OVERNIGHT"
-	serviceTypeFedex2Day                              serviceType = "FEDEX_2_DAY"
-	serviceTypeFedex2DayAM                            serviceType = "FEDEX_2_DAY_AM"
-	serviceTypeFedexExpressSaver                      serviceType = "FEDEX_EXPRESS_SAVER"
-	serviceTypeFedexSameDay                           serviceType = "SAME_DAY"
-	serviceTypeFedexSameDayCity                       serviceType = "SAME_DAY_CITY"
+	ServiceTypeFedexInternationalPriorityExpress      ServiceType = "FEDEX_INTERNATIONAL_PRIORITY_EXPRESS"
+	ServiceTypeFedexInternationalFirst                ServiceType = "FEDEX_INTERNATIONAL_FIRST"
+	ServiceTypeFedexInternationalPriority             ServiceType = "FEDEX_INTERNATIONAL_PRIORITY"
+	ServiceTypeFedexInternationalEconomy              ServiceType = "INTERNATIONAL_ECONOMY"
+	ServiceTypeFedexGround                            ServiceType = "FEDEX_GROUND"
+	ServiceTypeFedexFirstOvernight                    ServiceType = "FIRST_OVERNIGHT"
+	ServiceTypeFedexFirstOvernightFreight             ServiceType = "FEDEX_FIRST_FREIGHT"
+	ServiceTypeFedex1DayFreight                       ServiceType = "FEDEX_1_DAY_FREIGHT"
+	ServiceTypeFedex2DayFreight                       ServiceType = "FEDEX_2_DAY_FREIGHT"
+	ServiceTypeFedex3DayFreight                       ServiceType = "FEDEX_3_DAY_FREIGHT"
+	ServiceTypeFedexInternationalPriorityFreight      ServiceType = "INTERNATIONAL_PRIORITY_FREIGHT"
+	ServiceTypeFedexInternationalEconomyFreight       ServiceType = "INTERNATIONAL_ECONOMY_FREIGHT"
+	ServiceTypeFedexInternationalDeferredFreight      ServiceType = "FEDEX_INTERNATIONAL_DEFERRED_FREIGHT"
+	ServiceTypeFedexInternationalPriorityDistribution ServiceType = "INTERNATIONAL_PRIORITY_DISTRIBUTION"
+	ServiceTypeFedexInternationalDistributionFreight  ServiceType = "INTERNATIONAL_DISTRIBUTION_FREIGHT"
+	ServiceTypeInternationalGroundDistribution        ServiceType = "INTL_GROUND_DISTRIBUTION"
+	ServiceTypeFedexHomeDelivery                      ServiceType = "GROUND_HOME_DELIVERY"
+	ServiceTypeFedexGroundEconomy                     ServiceType = "SMART_POST"
+	ServiceTypeFedexPriorityOvernight                 ServiceType = "PRIORITY_OVERNIGHT"
+	ServiceTypeFedexStandardOvernight                 ServiceType = "STANDARD_OVERNIGHT"
+	ServiceTypeFedex2Day                              ServiceType = "FEDEX_2_DAY"
+	ServiceTypeFedex2DayAM                            ServiceType = "FEDEX_2_DAY_AM"
+	ServiceTypeFedexExpressSaver                      ServiceType = "FEDEX_EXPRESS_SAVER"
+	ServiceTypeFedexSameDay                           ServiceType = "SAME_DAY"
+	ServiceTypeFedexSameDayCity                       ServiceType = "SAME_DAY_CITY"
 )
 
-type destinationLocation struct {
+type DestinationLocation struct {
 	LocationId                string                     `json:"locationId"`
-	LocationContactAndAddress *locationContactAndAddress `json:"locationContactAndAddress"`
-	LocationType              fedexLocationType          `json:"locationType"`
+	LocationContactAndAddress *LocationContactAndAddress `json:"locationContactAndAddress"`
+	LocationType              FedexLocationType          `json:"locationType"`
 }
 
-type locationContactAndAddress struct {
+type LocationContactAndAddress struct {
 }
 
-type fedexLocationType string
+type FedexLocationType string
 
 const (
-	fedexLocationTypeAuthorizedShipCenter fedexLocationType = "FEDEX_AUTHORIZED_SHIP_CENTER"
-	fedexLocationTypeOffice               fedexLocationType = "FEDEX_OFFICE"
-	fedexLocationTypeSelfServiceLocation  fedexLocationType = "FEDEX_SELF_SERVICE_LOCATION"
-	fedexLocationTypeGroundTerminal       fedexLocationType = "FEDEX_GROUND_TERMINAL"
-	fedexLocationTypeOnsite               fedexLocationType = "FEDEX_ONSITE"
-	fedexLocationTypeExpressStation       fedexLocationType = "FEDEX_EXPRESS_STATION"
-	fedexLocationTypeFacility             fedexLocationType = "FEDEX_FACILITY"
-	fedexLocationTypeFreightServiceCenter fedexLocationType = "FEDEX_FREIGHT_SERVICE_CENTER"
-	fedexLocationTypeHomeDeliveryStation  fedexLocationType = "FEDEX_HOME_DELIVERY_STATION"
-	fedexLocationTypeShipAndGet           fedexLocationType = "FEDEX_SHIP_AND_GET"
-	fedexLocationTypeShipsite             fedexLocationType = "FEDEX_SHIPSITE"
-	fedexLocationTypeSmartPostHub         fedexLocationType = "FEDEX_SMART_POST_HUB"
+	FedexLocationTypeAuthorizedShipCenter FedexLocationType = "FEDEX_AUTHORIZED_SHIP_CENTER"
+	FedexLocationTypeOffice               FedexLocationType = "FEDEX_OFFICE"
+	FedexLocationTypeSelfServiceLocation  FedexLocationType = "FEDEX_SELF_SERVICE_LOCATION"
+	FedexLocationTypeGroundTerminal       FedexLocationType = "FEDEX_GROUND_TERMINAL"
+	FedexLocationTypeOnsite               FedexLocationType = "FEDEX_ONSITE"
+	FedexLocationTypeExpressStation       FedexLocationType = "FEDEX_EXPRESS_STATION"
+	FedexLocationTypeFacility             FedexLocationType = "FEDEX_FACILITY"
+	FedexLocationTypeFreightServiceCenter FedexLocationType = "FEDEX_FREIGHT_SERVICE_CENTER"
+	FedexLocationTypeHomeDeliveryStation  FedexLocationType = "FEDEX_HOME_DELIVERY_STATION"
+	FedexLocationTypeShipAndGet           FedexLocationType = "FEDEX_SHIP_AND_GET"
+	FedexLocationTypeShipsite             FedexLocationType = "FEDEX_SHIPSITE"
+	FedexLocationTypeSmartPostHub         FedexLocationType = "FEDEX_SMART_POST_HUB"
 )
 
-type statusDetail struct {
-	ScanLocation     *address           `json:"scanLocation"`
+type StatusDetail struct {
 	Code             string             `json:"code"`
 	DerivedCode      string             `json:"derivedCode"`
-	AncillaryDetails []*ancillaryDetail `json:"ancillaryDetails"`
-	StatusByLocale   string             `json:"statusByLocale"`
 	Description      string             `json:"description"`
-	DelayDetail      *delayDetail       `json:"delayDetail"`
+	ScanLocation     *Address           `json:"scanLocation"`
+	DelayDetail      *DelayDetail       `json:"delayDetail"`
+	AncillaryDetails []*AncillaryDetail `json:"ancillaryDetails"`
+	StatusByLocale   string             `json:"statusByLocale"`
 }
 
-type eventType string
+type EventType string
 
-func (d *eventType) ParcelEventType() envoy.ParcelEventType {
+func (d *EventType) ParcelEventType() envoy.ParcelEventType {
 	if d == nil {
 		return envoy.ParcelEventTypeUnknown
 	}
@@ -449,7 +453,7 @@ func (d *eventType) ParcelEventType() envoy.ParcelEventType {
 	}
 }
 
-type address struct {
+type Address struct {
 	AddressClassification string   `json:"addressClassification"`
 	Residential           bool     `json:"residential"`
 	StreetLines           []string `json:"streetLines"`
@@ -460,7 +464,7 @@ type address struct {
 	CountryName           string   `json:"countryName"`
 }
 
-func (a *address) String() string {
+func (a *Address) String() string {
 	sb := strings.Builder{}
 	if a.City != "" {
 		sb.WriteString(a.City)
@@ -487,175 +491,175 @@ func (a *address) String() string {
 	return strings.ToUpper(sb.String())
 }
 
-type ancillaryDetail struct {
+type AncillaryDetail struct {
 	Reason            string `json:"reason"`
 	ReasonDesctiption string `json:"reasonDescription"`
 	Action            string `json:"action"`
 	ActionDescription string `json:"actionDescription"`
 }
 
-type delayDetail struct {
-	Type    delayType    `json:"type"`
-	SubType delaySubType `json:"subType"`
-	Status  delayStatus  `json:"status"`
+type DelayDetail struct {
+	Type    DelayType    `json:"type"`
+	SubType DelaySubType `json:"subType"`
+	Status  DelayStatus  `json:"status"`
 }
 
-type delayType string
+type DelayType string
 
 const (
-	delayTypeWeather     delayType = "WEATHER"
-	delayTypeOperational delayType = "OPERATIONAL"
-	delayTypeLocal       delayType = "LOCAL"
-	delayTypeGeneral     delayType = "GENERAL"
-	delayTypeClearance   delayType = "CLEARANCE"
+	DelayTypeWeather     DelayType = "WEATHER"
+	DelayTypeOperational DelayType = "OPERATIONAL"
+	DelayTypeLocal       DelayType = "LOCAL"
+	DelayTypeGeneral     DelayType = "GENERAL"
+	DelayTypeClearance   DelayType = "CLEARANCE"
 )
 
-type delaySubType string
+type DelaySubType string
 
 const (
-	delaySubTypeSnow          delaySubType = "SNOW"
-	delaySubTypeTornado       delaySubType = "TORNADO"
-	delaySubTypeEarthquakeEtc delaySubType = "EARTHQUAKE etc"
+	DelaySubTypeSnow          DelaySubType = "SNOW"
+	DelaySubTypeTornado       DelaySubType = "TORNADO"
+	DelaySubTypeEarthquakeEtc DelaySubType = "EARTHQUAKE etc"
 )
 
-type delayStatus string
+type DelayStatus string
 
 const (
-	delayStatusDelayed delayStatus = "DELAYED"
-	delayStatusOnTime  delayStatus = "ON_TIME"
-	delayStatusEarly   delayStatus = "EARLY"
+	DelayStatusDelayed DelayStatus = "DELAYED"
+	DelayStatusOnTime  DelayStatus = "ON_TIME"
+	DelayStatusEarly   DelayStatus = "EARLY"
 )
 
-type serviceCommitMessage struct {
+type ServiceCommitMessage struct {
 	Message string                   `json:"message"`
-	Type    serviceCommitMessageType `json:"type"`
+	Type    ServiceCommitMessageType `json:"type"`
 }
 
-type serviceCommitMessageType string
+type ServiceCommitMessageType string
 
 const (
-	serviceCommitMessageTypeBrokerDeliveredDescription                        serviceCommitMessageType = "BROKER_DELIVERED_DESCRIPTION"
-	serviceCommitMessageTypeCancelledDescription                              serviceCommitMessageType = "CANCELLED_DESCRIPTION"
-	serviceCommitMessageTypeDeliveryInMultiplePieceShipment                   serviceCommitMessageType = "DELIVERY_IN_MULTIPLE_PIECE_SHIPMENT"
-	serviceCommitMessageTypeEstimatedDeliveryDateUnavailable                  serviceCommitMessageType = "ESTIMATED_DELIVERY_DATE_UNAVAILABLE"
-	serviceCommitMessageTypeExceptionInMultiplePieceShipment                  serviceCommitMessageType = "EXCEPTION_IN_MULTIPLE_PIECE_SHIPMENT"
-	serviceCommitMessageTypeFinalDeliveryAttempted                            serviceCommitMessageType = "FINAL_DELIVERY_ATTEMPTED"
-	serviceCommitMessageTypeFirstDeliveryAttempted                            serviceCommitMessageType = "FIRST_DELIVERY_ATTEMPTED"
-	serviceCommitMessageTypeHeldPackageAvailableForRecipientPickup            serviceCommitMessageType = "HELD_PACKAGE_AVAILABLE_FOR_RECIPIENT_PICKUP"
-	serviceCommitMessageTypeHeldPackageAvailableForRecipientPickupWithAddress serviceCommitMessageType = "HELD_PACKAGE_AVAILABLE_FOR_RECIPIENT_PICKUP_WITH_ADDRESS"
-	serviceCommitMessageTypeHeldPackageNotAvailableForRecipientPickup         serviceCommitMessageType = "HELD_PACKAGE_NOT_AVAILABLE_FOR_RECIPIENT_PICKUP"
-	serviceCommitMessageTypeShipmentLabelCreated                              serviceCommitMessageType = "SHIPMENT_LABEL_CREATED"
-	serviceCommitMessageTypeSubsequentDeliveryAttempted                       serviceCommitMessageType = "SUBSEQUENT_DELIVERY_ATTEMPTED"
-	serviceCommitMessageTypeUSPSDelivered                                     serviceCommitMessageType = "USPS_DELIVERED"
-	serviceCommitMessageTypeUSPSDelivering                                    serviceCommitMessageType = "USPS_DELIVERING"
+	ServiceCommitMessageTypeBrokerDeliveredDescription                        ServiceCommitMessageType = "BROKER_DELIVERED_DESCRIPTION"
+	ServiceCommitMessageTypeCancelledDescription                              ServiceCommitMessageType = "CANCELLED_DESCRIPTION"
+	ServiceCommitMessageTypeDeliveryInMultiplePieceShipment                   ServiceCommitMessageType = "DELIVERY_IN_MULTIPLE_PIECE_SHIPMENT"
+	ServiceCommitMessageTypeEstimatedDeliveryDateUnavailable                  ServiceCommitMessageType = "ESTIMATED_DELIVERY_DATE_UNAVAILABLE"
+	ServiceCommitMessageTypeExceptionInMultiplePieceShipment                  ServiceCommitMessageType = "EXCEPTION_IN_MULTIPLE_PIECE_SHIPMENT"
+	ServiceCommitMessageTypeFinalDeliveryAttempted                            ServiceCommitMessageType = "FINAL_DELIVERY_ATTEMPTED"
+	ServiceCommitMessageTypeFirstDeliveryAttempted                            ServiceCommitMessageType = "FIRST_DELIVERY_ATTEMPTED"
+	ServiceCommitMessageTypeHeldPackageAvailableForRecipientPickup            ServiceCommitMessageType = "HELD_PACKAGE_AVAILABLE_FOR_RECIPIENT_PICKUP"
+	ServiceCommitMessageTypeHeldPackageAvailableForRecipientPickupWithAddress ServiceCommitMessageType = "HELD_PACKAGE_AVAILABLE_FOR_RECIPIENT_PICKUP_WITH_ADDRESS"
+	ServiceCommitMessageTypeHeldPackageNotAvailableForRecipientPickup         ServiceCommitMessageType = "HELD_PACKAGE_NOT_AVAILABLE_FOR_RECIPIENT_PICKUP"
+	ServiceCommitMessageTypeShipmentLabelCreated                              ServiceCommitMessageType = "SHIPMENT_LABEL_CREATED"
+	ServiceCommitMessageTypeSubsequentDeliveryAttempted                       ServiceCommitMessageType = "SUBSEQUENT_DELIVERY_ATTEMPTED"
+	ServiceCommitMessageTypeUSPSDelivered                                     ServiceCommitMessageType = "USPS_DELIVERED"
+	ServiceCommitMessageTypeUSPSDelivering                                    ServiceCommitMessageType = "USPS_DELIVERING"
 )
 
-type informationNote struct {
+type InformationNote struct {
 	Code        string `json:"code"`
 	Description string `json:"description"`
 }
 
-type errorInfo struct {
+type ErrorInfo struct {
 	Code          string         `json:"code"`
 	ParameterList []*envoy.Entry `json:"parameterList"`
 	Message       string         `json:"message"`
 }
 
-type specialHandling struct {
-	Description string `json:"description"`
+type SpecialHandling struct {
 	Type        string `json:"type"`
 	PaymentType string `json:"paymentType"`
+	Description string `json:"description"`
 }
 
-type availableImage struct {
-	Size imageSize `json:"size"`
-	Type imageType `json:"type"`
+type AvailableImage struct {
+	Size ImageSize `json:"size"`
+	Type ImageType `json:"type"`
 }
 
-type imageSize string
+type ImageSize string
 
 const (
-	imageSizeSmall imageSize = "SMALL"
-	imageSizeLarge imageSize = "LARGE"
+	ImageSizeSmall ImageSize = "SMALL"
+	ImageSizeLarge ImageSize = "LARGE"
 )
 
-type imageType string
+type ImageType string
 
 const (
-	imageTypeProodOfDelivery imageType = "PROOF_OF_DELIVERY"
-	imageTypeBillOfLading    imageType = "BILL_OF_LADING"
+	ImageTypeProodOfDelivery ImageType = "PROOF_OF_DELIVERY"
+	ImageTypeBillOfLading    ImageType = "BILL_OF_LADING"
 )
 
-type deliveryDetails struct {
+type DeliveryDetails struct {
 	ReceivedByName                    string                             `json:"receivedByName"`
+	SignedByName                      string                             `json:"signedByName"`
 	DestinationServiceArea            string                             `json:"destinationServiceArea"`
 	DestinationServiceAreaDescription string                             `json:"destinationServiceAreaDescription"`
+	LocationType                      LocationType                       `json:"locationType"`
 	LocationDescription               string                             `json:"locationDescription"`
-	ActualDeliveryAddress             *address                           `json:"actualDeliveryAddress"`
+	ActualDeliveryAddress             *Address                           `json:"actualDeliveryAddress"`
 	DeliveryToday                     bool                               `json:"deliveryToday"`
-	LocationType                      locationType                       `json:"locationType"`
-	SignedByName                      string                             `json:"signedByName"`
-	OfficeOrderDeliveryMethod         string                             `json:"officeOrderDeliveryMethod"`
 	DeliveryAttempts                  string                             `json:"deliveryAttempts"`
 	DeliveryOptionEligibilityDetails  []*deliveryOptionEligibilityDetail `json:"deliveryOptionEligibilityDetails"`
+	OfficeOrderDeliveryMethod         string                             `json:"officeOrderDeliveryMethod"`
 }
 
-type locationType string
+type LocationType string
 
 const (
-	locationTypeReceptionistOrFrontDesk locationType = "RECEPTIONIST_OR_FRONT_DESK"
-	locationTypeShippingReceiving       locationType = "SHIPPING_RECEIVING"
-	locationTypeMailroom                locationType = "MAILROOM"
-	locationTypeResidence               locationType = "RESIDENCE"
-	locationTypeGuardOrSecurityStation  locationType = "GUARD_OR_SECURITY_STATION"
-	locationTypeFedexLocation           locationType = "FEDEX_LOCATION"
-	locationTypeInBondOrCage            locationType = "IN_BOND_OR_CAGE"
-	locationTypePharmacy                locationType = "PHARMACY"
-	locationTypeGateHouse               locationType = "GATE_HOUSE"
-	locationTypeManagerOffice           locationType = "MANAGER_OFFICE"
-	locationTypeMainOffice              locationType = "MAIN_OFFICE"
-	locationTypeLeasingOffice           locationType = "LEASING_OFFICE"
-	locationTypeRentalOffice            locationType = "RENTAL_OFFICE"
-	locationTypeApartmentOffice         locationType = "APARTMENT_OFFICE"
-	locationTypeOther                   locationType = "OTHER"
+	LocationTypeReceptionistOrFrontDesk LocationType = "RECEPTIONIST_OR_FRONT_DESK"
+	LocationTypeShippingReceiving       LocationType = "SHIPPING_RECEIVING"
+	LocationTypeMailroom                LocationType = "MAILROOM"
+	LocationTypeResidence               LocationType = "RESIDENCE"
+	LocationTypeGuardOrSecurityStation  LocationType = "GUARD_OR_SECURITY_STATION"
+	LocationTypeFedexLocation           LocationType = "FEDEX_LOCATION"
+	LocationTypeInBondOrCage            LocationType = "IN_BOND_OR_CAGE"
+	LocationTypePharmacy                LocationType = "PHARMACY"
+	LocationTypeGateHouse               LocationType = "GATE_HOUSE"
+	LocationTypeManagerOffice           LocationType = "MANAGER_OFFICE"
+	LocationTypeMainOffice              LocationType = "MAIN_OFFICE"
+	LocationTypeLeasingOffice           LocationType = "LEASING_OFFICE"
+	LocationTypeRentalOffice            LocationType = "RENTAL_OFFICE"
+	LocationTypeApartmentOffice         LocationType = "APARTMENT_OFFICE"
+	LocationTypeOther                   LocationType = "OTHER"
 )
 
 type deliveryOptionEligibilityDetail struct {
-	Option      deliveryEligibilityOption `json:"option"`
+	Option      DeliveryEligibilityOption `json:"option"`
 	Eligibility string                    `json:"eligibility"`
 }
 
-type deliveryEligibilityOption string
+type DeliveryEligibilityOption string
 
 const (
-	deliveryEligibilityOptionDisputeDelivery          deliveryEligibilityOption = "DISPUTE_DELIVERY"
-	deliveryEligibilityOptionIndirectSignatureRelease deliveryEligibilityOption = "INDIRECT_SIGNATURE_RELEASE"
-	deliveryEligibilityOptionRedirectToHoldAtLocation deliveryEligibilityOption = "REDIRECT_TO_HOLD_AT_LOCATION"
-	deliveryEligibilityOptionReroute                  deliveryEligibilityOption = "REROUTE"
-	deliveryEligibilityOptionReschedule               deliveryEligibilityOption = "RESCHEDULE"
-	deliveryEligibilityOptionReturnToShipper          deliveryEligibilityOption = "RETURN_TO_SHIPPER"
-	deliveryEligibilityOptionSupplementAddress        deliveryEligibilityOption = "SUPPLEMENT_ADDRESS"
+	DeliveryEligibilityOptionDisputeDelivery          DeliveryEligibilityOption = "DISPUTE_DELIVERY"
+	DeliveryEligibilityOptionIndirectSignatureRelease DeliveryEligibilityOption = "INDIRECT_SIGNATURE_RELEASE"
+	DeliveryEligibilityOptionRedirectToHoldAtLocation DeliveryEligibilityOption = "REDIRECT_TO_HOLD_AT_LOCATION"
+	DeliveryEligibilityOptionReroute                  DeliveryEligibilityOption = "REROUTE"
+	DeliveryEligibilityOptionReschedule               DeliveryEligibilityOption = "RESCHEDULE"
+	DeliveryEligibilityOptionReturnToShipper          DeliveryEligibilityOption = "RETURN_TO_SHIPPER"
+	DeliveryEligibilityOptionSupplementAddress        DeliveryEligibilityOption = "SUPPLEMENT_ADDRESS"
 )
 
-type scanEvent struct {
-	Date                 localDateTime    `json:"date"`
-	DerivedStatus        string           `json:"derivedStatus"`
-	ScanLocation         *address         `json:"scanLocation"`
-	LocationId           string           `json:"locationId"`
-	LocationType         scanLocationType `json:"locationType"`
-	ExceptionDescription string           `json:"exceptionDescription"`
+type ScanEvent struct {
+	Date                 LocalDateTime    `json:"date"`
+	EventType            EventType        `json:"eventType"`
 	EventDescription     string           `json:"eventDescription"`
-	EventType            eventType        `json:"eventType"`
+	ScanLocation         *Address         `json:"scanLocation"`
+	LocationId           string           `json:"locationId"`
+	LocationType         ScanLocationType `json:"locationType"`
+	DerivedStatus        string           `json:"derivedStatus"`
 	DerivedStatusCode    string           `json:"derivedStatusCode"`
+	ExceptionDescription string           `json:"exceptionDescription"`
 	ExceptionCode        string           `json:"exceptionCode"`
-	DelayDetail          *delayDetail     `json:"delayDetail"`
+	DelayDetail          *DelayDetail     `json:"delayDetail"`
 }
 
-type localDateTime struct {
+type LocalDateTime struct {
 	time.Time
 }
 
-func (t *localDateTime) UnmarshalJSON(data []byte) error {
+func (t *LocalDateTime) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
@@ -663,24 +667,24 @@ func (t *localDateTime) UnmarshalJSON(data []byte) error {
 
 	tz, err := time.Parse(time.RFC3339, s)
 	if err == nil {
-		*t = localDateTime{tz}
+		*t = LocalDateTime{tz}
 		return nil
 	}
 
 	tt, err := time.Parse("2006-01-02T15:04:05", s)
 	if err == nil {
-		*t = localDateTime{tt}
+		*t = LocalDateTime{tt}
 		return nil
 	}
 
 	return err
 }
 
-type localDate struct {
+type LocalDate struct {
 	time.Time
 }
 
-func (t *localDate) UnmarshalJSON(data []byte) error {
+func (t *LocalDate) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
@@ -691,201 +695,201 @@ func (t *localDate) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*t = localDate{tt}
+	*t = LocalDate{tt}
 	return nil
 }
 
-type scanLocationType string
+type ScanLocationType string
 
 const (
-	scanLocationTypeAirport                  scanLocationType = "AIRPORT"
-	scanLocationTypeCustomsBroker            scanLocationType = "CUSTOMS_BROKER"
-	scanLocationTypeCustomer                 scanLocationType = "CUSTOMER"
-	scanLocationTypeDeliveryLocation         scanLocationType = "DELIVERY_LOCATION"
-	scanLocationTypeDestinationAirport       scanLocationType = "DESTINATION_AIRPORT"
-	scanLocationTypeDropBox                  scanLocationType = "DROP_BOX"
-	scanLocationTypeDestinationFedexFacility scanLocationType = "DESTINATION_FEDEX_FACILITY"
-	scanLocationTypeEnroute                  scanLocationType = "ENROUTE"
-	scanLocationTypeFedexFacility            scanLocationType = "FEDEX_FACILITY"
-	scanLocationTypeInterlineCarrier         scanLocationType = "INTERLINE_CARRIER"
-	scanLocationTypeFedexOfficeLocation      scanLocationType = "FEDEX_OFFICE_LOCATION"
-	scanLocationTypeNonFedexFacility         scanLocationType = "NON_FEDEX_FACILITY"
-	scanLocationTypeOriginAirport            scanLocationType = "ORIGIN_AIRPORT"
-	scanLocationTypeOriginFedexFacility      scanLocationType = "ORIGIN_FEDEX_FACILITY"
-	scanLocationTypePortOfEntry              scanLocationType = "PORT_OF_ENTRY"
-	scanLocationTypePickupLocation           scanLocationType = "PICKUP_LOCATION"
-	scanLocationTypePlane                    scanLocationType = "PLANE"
-	scanLocationTypeSortFacility             scanLocationType = "SORT_FACILITY"
-	scanLocationTypeShipAndGetLocation       scanLocationType = "SHIP_AND_GET_LOCATION"
-	scanLocationTypeTurnpoint                scanLocationType = "TURNPOINT"
-	scanLocationTypeVehicle                  scanLocationType = "VEHICLE"
+	ScanLocationTypeAirport                  ScanLocationType = "AIRPORT"
+	ScanLocationTypeCustomsBroker            ScanLocationType = "CUSTOMS_BROKER"
+	ScanLocationTypeCustomer                 ScanLocationType = "CUSTOMER"
+	ScanLocationTypeDeliveryLocation         ScanLocationType = "DELIVERY_LOCATION"
+	ScanLocationTypeDestinationAirport       ScanLocationType = "DESTINATION_AIRPORT"
+	ScanLocationTypeDropBox                  ScanLocationType = "DROP_BOX"
+	ScanLocationTypeDestinationFedexFacility ScanLocationType = "DESTINATION_FEDEX_FACILITY"
+	ScanLocationTypeEnroute                  ScanLocationType = "ENROUTE"
+	ScanLocationTypeFedexFacility            ScanLocationType = "FEDEX_FACILITY"
+	ScanLocationTypeInterlineCarrier         ScanLocationType = "INTERLINE_CARRIER"
+	ScanLocationTypeFedexOfficeLocation      ScanLocationType = "FEDEX_OFFICE_LOCATION"
+	ScanLocationTypeNonFedexFacility         ScanLocationType = "NON_FEDEX_FACILITY"
+	ScanLocationTypeOriginAirport            ScanLocationType = "ORIGIN_AIRPORT"
+	ScanLocationTypeOriginFedexFacility      ScanLocationType = "ORIGIN_FEDEX_FACILITY"
+	ScanLocationTypePortOfEntry              ScanLocationType = "PORT_OF_ENTRY"
+	ScanLocationTypePickupLocation           ScanLocationType = "PICKUP_LOCATION"
+	ScanLocationTypePlane                    ScanLocationType = "PLANE"
+	ScanLocationTypeSortFacility             ScanLocationType = "SORT_FACILITY"
+	ScanLocationTypeShipAndGetLocation       ScanLocationType = "SHIP_AND_GET_LOCATION"
+	ScanLocationTypeTurnpoint                ScanLocationType = "TURNPOINT"
+	ScanLocationTypeVehicle                  ScanLocationType = "VEHICLE"
 )
 
-type dateAndTime struct {
+type DateAndTime struct {
 	DateTime string            `json:"dateTime"`
-	Type     trackingEventType `json:"type"`
+	Type     TrackingEventType `json:"type"`
 }
 
-type trackingEventType string
+type TrackingEventType string
 
 const (
-	trackingEventTypeActualDelivery            trackingEventType = "ACTUAL_DELIVERY"
-	trackingEventTypeActualPickup              trackingEventType = "ACTUAL_PICKUP"
-	trackingEventTypeActualTender              trackingEventType = "ACTUAL_TENDER"
-	trackingEventTypeAnticipatedTender         trackingEventType = "ANTICIPATED_TENDER"
-	trackingEventTypeAppointmentDelivery       trackingEventType = "APPOINTMENT_DELIVERY"
-	trackingEventTypeAttemptedDelivery         trackingEventType = "ATTEMPTED_DELIVERY"
-	trackingEventTypeCommitment                trackingEventType = "COMMITMENT"
-	trackingEventTypeEstimatedArrivalAtGateway trackingEventType = "ESTIMATED_ARRIVAL_AT_GATEWAY"
-	trackingEventTypeEstimatedDelivery         trackingEventType = "ESTIMATED_DELIVERY"
-	trackingEventTypeEstimatedPickup           trackingEventType = "ESTIMATED_PICKUP"
-	trackingEventTypeEstimatedReturnToStation  trackingEventType = "ESTIMATED_RETURN_TO_STATION"
-	trackingEventTypeShip                      trackingEventType = "SHIP"
-	trackingEventTypeShipmentDataReceived      trackingEventType = "SHIPMENT_DATA_RECEIVED"
+	TrackingEventTypeActualDelivery            TrackingEventType = "ACTUAL_DELIVERY"
+	TrackingEventTypeActualPickup              TrackingEventType = "ACTUAL_PICKUP"
+	TrackingEventTypeActualTender              TrackingEventType = "ACTUAL_TENDER"
+	TrackingEventTypeAnticipatedTender         TrackingEventType = "ANTICIPATED_TENDER"
+	TrackingEventTypeAppointmentDelivery       TrackingEventType = "APPOINTMENT_DELIVERY"
+	TrackingEventTypeAttemptedDelivery         TrackingEventType = "ATTEMPTED_DELIVERY"
+	TrackingEventTypeCommitment                TrackingEventType = "COMMITMENT"
+	TrackingEventTypeEstimatedArrivalAtGateway TrackingEventType = "ESTIMATED_ARRIVAL_AT_GATEWAY"
+	TrackingEventTypeEstimatedDelivery         TrackingEventType = "ESTIMATED_DELIVERY"
+	TrackingEventTypeEstimatedPickup           TrackingEventType = "ESTIMATED_PICKUP"
+	TrackingEventTypeEstimatedReturnToStation  TrackingEventType = "ESTIMATED_RETURN_TO_STATION"
+	TrackingEventTypeShip                      TrackingEventType = "SHIP"
+	TrackingEventTypeShipmentDataReceived      TrackingEventType = "SHIPMENT_DATA_RECEIVED"
 )
 
-type packageDetails struct {
-	PackageDescription    *packageDescription   `json:"packageDescription"`
-	PhysicalPackagingType physicalPackagingType `json:"physicalPackagingType"`
+type PackageDetails struct {
+	PackageDescription    *PackageDescription   `json:"packageDescription"`
+	PhysicalPackagingType PhysicalPackagingType `json:"physicalPackagingType"`
 	PackageContent        []string              `json:"packageContent"`
 	SequenceNumber        string                `json:"sequenceNumber"`
 	Count                 string                `json:"count"`
 	ContentPieceCount     string                `json:"contentPieceCount"`
 	UndeliveredCount      string                `json:"undeliveredCount"`
-	WeightAndDimensions   *weightAndDimensions  `json:"weightAndDimensions"`
+	WeightAndDimensions   *WeightAndDimensions  `json:"weightAndDimensions"`
 	DeclaredValue         envoy.Value           `json:"declaredValue"`
 }
 
-type physicalPackagingType string
+type PhysicalPackagingType string
 
 const (
-	physicalPackagingTypeBag           physicalPackagingType = "BAG"
-	physicalPackagingTypeBarrel        physicalPackagingType = "BARREL"
-	physicalPackagingTypeBasket        physicalPackagingType = "BASKET"
-	physicalPackagingTypeBox           physicalPackagingType = "BOX"
-	physicalPackagingTypeBucket        physicalPackagingType = "BUCKET"
-	physicalPackagingTypeBundle        physicalPackagingType = "BUNDLE"
-	physicalPackagingTypeCage          physicalPackagingType = "CAGE"
-	physicalPackagingTypeCarton        physicalPackagingType = "CARTON"
-	physicalPackagingTypeCase          physicalPackagingType = "CASE"
-	physicalPackagingTypeChest         physicalPackagingType = "CHEST"
-	physicalPackagingTypeContainer     physicalPackagingType = "CONTAINER"
-	physicalPackagingTypeCrate         physicalPackagingType = "CRATE"
-	physicalPackagingTypeCylinder      physicalPackagingType = "CYLINDER"
-	physicalPackagingTypeDrum          physicalPackagingType = "DRUM"
-	physicalPackagingTypeEnvelope      physicalPackagingType = "ENVELOPE"
-	physicalPackagingTypeHamper        physicalPackagingType = "HAMPER"
-	physicalPackagingTypeOther         physicalPackagingType = "OTHER"
-	physicalPackagingTypePackage       physicalPackagingType = "PACKAGE"
-	physicalPackagingTypePail          physicalPackagingType = "PAIL"
-	physicalPackagingTypePallet        physicalPackagingType = "PALLET"
-	physicalPackagingTypeParcel        physicalPackagingType = "PARCEL"
-	physicalPackagingTypePiece         physicalPackagingType = "PIECE"
-	physicalPackagingTypeReel          physicalPackagingType = "REEL"
-	physicalPackagingTypeRoll          physicalPackagingType = "ROLL"
-	physicalPackagingTypeSack          physicalPackagingType = "SACK"
-	physicalPackagingTypeShrinkwrapped physicalPackagingType = "SHRINKWRAPPED"
-	physicalPackagingTypeSkid          physicalPackagingType = "SKID"
-	physicalPackagingTypeTank          physicalPackagingType = "TANK"
-	physicalPackagingTypeTotebin       physicalPackagingType = "TOTEBIN"
-	physicalPackagingTypeTube          physicalPackagingType = "TUBE"
-	physicalPackagingTypeUnit          physicalPackagingType = "UNIT"
+	PhysicalPackagingTypeBag           PhysicalPackagingType = "BAG"
+	PhysicalPackagingTypeBarrel        PhysicalPackagingType = "BARREL"
+	PhysicalPackagingTypeBasket        PhysicalPackagingType = "BASKET"
+	PhysicalPackagingTypeBox           PhysicalPackagingType = "BOX"
+	PhysicalPackagingTypeBucket        PhysicalPackagingType = "BUCKET"
+	PhysicalPackagingTypeBundle        PhysicalPackagingType = "BUNDLE"
+	PhysicalPackagingTypeCage          PhysicalPackagingType = "CAGE"
+	PhysicalPackagingTypeCarton        PhysicalPackagingType = "CARTON"
+	PhysicalPackagingTypeCase          PhysicalPackagingType = "CASE"
+	PhysicalPackagingTypeChest         PhysicalPackagingType = "CHEST"
+	PhysicalPackagingTypeContainer     PhysicalPackagingType = "CONTAINER"
+	PhysicalPackagingTypeCrate         PhysicalPackagingType = "CRATE"
+	PhysicalPackagingTypeCylinder      PhysicalPackagingType = "CYLINDER"
+	PhysicalPackagingTypeDrum          PhysicalPackagingType = "DRUM"
+	PhysicalPackagingTypeEnvelope      PhysicalPackagingType = "ENVELOPE"
+	PhysicalPackagingTypeHamper        PhysicalPackagingType = "HAMPER"
+	PhysicalPackagingTypeOther         PhysicalPackagingType = "OTHER"
+	PhysicalPackagingTypePackage       PhysicalPackagingType = "PACKAGE"
+	PhysicalPackagingTypePail          PhysicalPackagingType = "PAIL"
+	PhysicalPackagingTypePallet        PhysicalPackagingType = "PALLET"
+	PhysicalPackagingTypeParcel        PhysicalPackagingType = "PARCEL"
+	PhysicalPackagingTypePiece         PhysicalPackagingType = "PIECE"
+	PhysicalPackagingTypeReel          PhysicalPackagingType = "REEL"
+	PhysicalPackagingTypeRoll          PhysicalPackagingType = "ROLL"
+	PhysicalPackagingTypeSack          PhysicalPackagingType = "SACK"
+	PhysicalPackagingTypeShrinkwrapped PhysicalPackagingType = "SHRINKWRAPPED"
+	PhysicalPackagingTypeSkid          PhysicalPackagingType = "SKID"
+	PhysicalPackagingTypeTank          PhysicalPackagingType = "TANK"
+	PhysicalPackagingTypeTotebin       PhysicalPackagingType = "TOTEBIN"
+	PhysicalPackagingTypeTube          PhysicalPackagingType = "TUBE"
+	PhysicalPackagingTypeUnit          PhysicalPackagingType = "UNIT"
 )
 
-type packageDescription struct {
-	Type        packageType `json:"type"`
+type PackageDescription struct {
+	Type        PackageType `json:"type"`
 	Description string      `json:"description"`
 }
 
-type packageType string
+type PackageType string
 
 const (
-	pacakgeTypeYourPackaging      packageType = "YOUR_PACKAGING"
-	packageTypeFedexEnvelope      packageType = "FEDEX_ENVELOPE"
-	packageTypeFedexBox           packageType = "FEDEX_BOX"
-	packageTypeFedexSmallBox      packageType = "FEDEX_SMALL_BOX"
-	packageTyoeFedexMediumBox     packageType = "FEDEX_MEDIUM_BOX"
-	packageTypeFedexLargeBox      packageType = "FEDEX_LARGE_BOX"
-	packageTypeFedexExtraLargeBox packageType = "FEDEX_EXTRA_LARGE_BOX"
-	packageTypeFedex10KgBox       packageType = "FEDEX_10KG_BOX"
-	packageTypeFedex25KgBox       packageType = "FEDEX_25KG_BOX"
-	packageTypeFedexPak           packageType = "FEDEX_PAK"
-	packageTypeFedexTube          packageType = "FEDEX_TUBE"
+	PacakgeTypeYourPackaging      PackageType = "YOUR_PACKAGING"
+	PackageTypeFedexEnvelope      PackageType = "FEDEX_ENVELOPE"
+	PackageTypeFedexBox           PackageType = "FEDEX_BOX"
+	PackageTypeFedexSmallBox      PackageType = "FEDEX_SMALL_BOX"
+	PackageTyoeFedexMediumBox     PackageType = "FEDEX_MEDIUM_BOX"
+	PackageTypeFedexLargeBox      PackageType = "FEDEX_LARGE_BOX"
+	PackageTypeFedexExtraLargeBox PackageType = "FEDEX_EXTRA_LARGE_BOX"
+	PackageTypeFedex10KgBox       PackageType = "FEDEX_10KG_BOX"
+	PackageTypeFedex25KgBox       PackageType = "FEDEX_25KG_BOX"
+	PackageTypeFedexPak           PackageType = "FEDEX_PAK"
+	PackageTypeFedexTube          PackageType = "FEDEX_TUBE"
 )
 
-type weightAndDimensions struct {
+type WeightAndDimensions struct {
 	Weight     []envoy.Dimensioned `json:"weight"`
 	Dimensions []envoy.Size        `json:"dimensions"`
 }
 
-type location struct {
-	LocationId                string `json:"locationId"`
+type Location struct {
+	LocationId                string            `json:"locationId"`
+	LocationType              FedexLocationType `json:"locationType"`
 	LocationContactAndAddress struct {
-		Address address `json:"address"`
+		Address Address `json:"address"`
 	} `json:"locationContactAndAddress"`
-	LocationType fedexLocationType `json:"locationType"`
 }
 
-type customDeliveryOption struct {
-	Type                       customDeliveryType          `json:"type"`
+type CustomDeliveryOption struct {
+	Type                       CustomDeliveryType          `json:"type"`
 	Description                string                      `json:"description"`
 	Status                     string                      `json:"status"`
-	RequestedAppointmentDetail *requestedAppointmentDetail `json:"requestedAppointmentDetail"`
+	RequestedAppointmentDetail *RequestedAppointmentDetail `json:"requestedAppointmentDetail"`
 }
 
-type customDeliveryType string
+type CustomDeliveryType string
 
 const (
-	customDeliveryTypeReroute                    customDeliveryType = "REROUTE"
-	customDeliveryTypeAppointment                customDeliveryType = "APPOINTMENT"
-	customDeliveryTypeDateCertain                customDeliveryType = "DATE_CERTAIN"
-	customDeliveryTypeEvening                    customDeliveryType = "EVENING"
-	customDeliveryTypeRedirectToHoldAtLocation   customDeliveryType = "REDIRECT_TO_HOLD_AT_LOCATION"
-	customDeliveryTypeElectronicSignatureRelease customDeliveryType = "ELECTRONIC_SIGNATURE_RELEASE"
+	CustomDeliveryTypeReroute                    CustomDeliveryType = "REROUTE"
+	CustomDeliveryTypeAppointment                CustomDeliveryType = "APPOINTMENT"
+	CustomDeliveryTypeDateCertain                CustomDeliveryType = "DATE_CERTAIN"
+	CustomDeliveryTypeEvening                    CustomDeliveryType = "EVENING"
+	CustomDeliveryTypeRedirectToHoldAtLocation   CustomDeliveryType = "REDIRECT_TO_HOLD_AT_LOCATION"
+	CustomDeliveryTypeElectronicSignatureRelease CustomDeliveryType = "ELECTRONIC_SIGNATURE_RELEASE"
 )
 
-type requestedAppointmentDetail struct {
+type RequestedAppointmentDetail struct {
 	Date   string            `json:"date"`
-	Window []*deliveryWindow `json:"window"`
+	Window []*DeliveryWindow `json:"window"`
 }
 
-type deliveryWindow struct {
+type DeliveryWindow struct {
 	Description string `json:"description"`
 	Window      struct {
 		Begins time.Time `json:"begins"`
 		Ends   time.Time `json:"ends"`
 	} `json:"window"`
-	Type trackingEventType `json:"type"`
+	Type TrackingEventType `json:"type"`
 }
 
-type pieceCount struct {
-	Count       string                `json:"count"`
-	Description string                `json:"description"`
-	Type        piceCountLocationType `json:"type"`
+type PieceCount struct {
+	Count       string                 `json:"count"`
+	Description string                 `json:"description"`
+	Type        PieceCountLocationType `json:"type"`
 }
 
-type piceCountLocationType string
+type PieceCountLocationType string
 
 const (
-	piceCountLocationTypeDestination piceCountLocationType = "DESTINATION"
-	piceCountLocationTypeOrigin      piceCountLocationType = "ORIGIN"
+	PieceCountLocationTypeDestination PieceCountLocationType = "DESTINATION"
+	PieceCountLocationTypeOrigin      PieceCountLocationType = "ORIGIN"
 )
 
-type alert struct {
+type Alert struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
-type token struct {
-	value      string
-	expiration time.Time
+type Token struct {
+	Value      string
+	Expiration time.Time
 }
 
-func (t *token) isValid() bool {
-	return t.expiration.After(time.Now())
+func (t *Token) IsValid() bool {
+	return t.Expiration.After(time.Now())
 }
 
-func (t *token) UnmarshalJSON(data []byte) error {
+func (t *Token) UnmarshalJSON(data []byte) error {
 	var raw struct {
 		AccessToken string `json:"access_token"`
 		ExpiresIn   int    `json:"expires_in"`
@@ -899,8 +903,8 @@ func (t *token) UnmarshalJSON(data []byte) error {
 
 	expiration := time.Now().Add(time.Duration(raw.ExpiresIn) * time.Second)
 
-	t.value = raw.AccessToken
-	t.expiration = expiration
+	t.Value = raw.AccessToken
+	t.Expiration = expiration
 
 	return nil
 }
