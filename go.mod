@@ -6,7 +6,6 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.3
 	github.com/charmbracelet/lipgloss v1.0.0
-	github.com/dgraph-io/badger/v4 v4.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/lrstanley/bubblezone v0.0.0-20250208020128-be525e7e10ed
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
@@ -15,6 +14,8 @@ require (
 )
 
 require (
+	dev.freespoke.com/go-package-tracking v1.0.0 // indirect
+	github.com/asdine/storm/v3 v3.2.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
@@ -27,6 +28,7 @@ require (
 	github.com/google/flatbuffers v24.12.23+incompatible // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jkeen/tracking_number_data v1.5.1-0.20230616035449-df8e622df66a // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -47,6 +49,7 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	go.etcd.io/bbolt v1.3.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect

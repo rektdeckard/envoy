@@ -13,8 +13,8 @@ import (
 	"github.com/rektdeckard/envoy/pkg"
 )
 
-const (
-	BaseURL = "https://apis.fedex.com"
+var (
+	BaseURL, _ = url.Parse("https://apis.fedex.com")
 )
 
 type FedexService struct {
@@ -35,7 +35,7 @@ func NewFedexService(client *http.Client, apiKey, apiSecret string) *FedexServic
 	}
 }
 
-func (s *FedexService) RefreshToken() error {
+func (s *FedexService) Reauthenticate() error {
 	const endpoint = "/oauth/token"
 
 	data := url.Values{}
@@ -43,15 +43,15 @@ func (s *FedexService) RefreshToken() error {
 	data.Set("client_id", s.APIKey)
 	data.Set("client_secret", s.APISecret)
 
-	req, err := http.NewRequest("POST", BaseURL+endpoint, strings.NewReader(data.Encode()))
+	url := BaseURL.JoinPath(endpoint)
+	req, err := http.NewRequest("POST", url.String(), strings.NewReader(data.Encode()))
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := s.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (s *FedexService) TrackRaw(trackingNumbers []string) (*TrackingResponse, er
 	const endpoint = "/track/v1/trackingnumbers"
 
 	if s.Token == nil || !s.Token.IsValid() {
-		if err := s.RefreshToken(); err != nil {
+		if err := s.Reauthenticate(); err != nil {
 			return nil, err
 		}
 	}
@@ -90,7 +90,8 @@ func (s *FedexService) TrackRaw(trackingNumbers []string) (*TrackingResponse, er
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, BaseURL+endpoint, bytes.NewBuffer(reqBody))
+	url := BaseURL.JoinPath(endpoint)
+	req, err := http.NewRequest(http.MethodPost, url.String(), bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, err
 	}
@@ -122,21 +123,23 @@ func (s *FedexService) TrackRaw(trackingNumbers []string) (*TrackingResponse, er
 	return &trackingRes, nil
 }
 
-func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
+func (s *FedexService) Track(trackingNumbers []string) ([]*envoy.Parcel, error) {
 	trackingRes, err := s.TrackRaw(trackingNumbers)
 	if err != nil {
 		return nil, err
 	}
 
-	var parcels []envoy.Parcel
+	var parcels []*envoy.Parcel
 	for _, r := range trackingRes.Output.CompleteTrackResults {
 		parcel := envoy.Parcel{
+			Name:           r.TrackingNumer, // TODO: derive name
 			Carrier:        envoy.CarrierFedEx,
 			TrackingNumber: r.TrackingNumer,
 			TrackingURL: fmt.Sprintf(
 				"https://www.fedex.com/apps/fedextrack/?tracknumbers=%s",
 				r.TrackingNumer,
 			),
+			Data: &envoy.ParcelData{},
 		}
 
 		for _, r := range r.TrackResults {
@@ -149,9 +152,9 @@ func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
 					lastEvent = e
 				}
 				if e.EventType == "DL" {
-					parcel.Delivered = true
+					parcel.Data.Delivered = true
 				}
-				parcel.TrackingEvents = append(parcel.TrackingEvents, envoy.ParcelEvent{
+				parcel.Data.Events = append(parcel.Data.Events, envoy.ParcelEvent{
 					Timestamp:   e.Date.Time,
 					Description: e.EventDescription,
 					Location:    e.ScanLocation.String(),
@@ -160,13 +163,13 @@ func (s *FedexService) Track(trackingNumbers []string) ([]envoy.Parcel, error) {
 			}
 		}
 
-		parcels = append(parcels, parcel)
+		parcels = append(parcels, &parcel)
 	}
 
 	return parcels, nil
 }
 
-type trackingRequest struct {
+type request struct {
 	TrackingInfo         []*trackingInfo `json:"trackingInfo"`
 	IncludeDetailedScans bool            `json:"includeDetailedScans"`
 }
@@ -179,12 +182,12 @@ type trackingInfo struct {
 
 type TrackingNumberInfo struct {
 	TrackingNumber         string `json:"trackingNumber"`
-	CarrierCode            string `json:"carrierCode,omitempty"`
 	TrackingNumberUniqueId string `json:"trackingNumberUniqueId,omitempty"`
+	CarrierCode            string `json:"carrierCode,omitempty"`
 }
 
-func newTrackingRequest(trackingNumbers []string) *trackingRequest {
-	tr := &trackingRequest{
+func newTrackingRequest(trackingNumbers []string) *request {
+	tr := &request{
 		IncludeDetailedScans: true,
 	}
 
@@ -220,41 +223,43 @@ type CompleteTrackResult struct {
 }
 
 type TrackResults struct {
-	TrackingNumberInfo          *TrackingNumberInfo     `json:"trackingNumberInfo"`
-	AdditionalTrackingInfo      *AdditionalTrackingInfo `json:"additionalTrackingInfo"`
-	DistanceToDestination       envoy.Dimensioned       `json:"distanceToDestination"`
-	ConsolidationDetail         []*ConsolidationDetail  `json:"consolidationDetail"`
-	MeterNumber                 string                  `json:"meterNumber"`
-	ReturnDetail                *ReturnDetail           `json:"returnDetail"`
-	ServiceDetail               *ServiceDetail          `json:"serviceDetail"`
-	DestinationLocation         *DestinationLocation    `json:"destinationLocation"`
-	LastStatusDetail            *StatusDetail           `json:"lastStatusDetail"`
-	ServiceCommitMessage        ServiceCommitMessage    `json:"serviceCommitMessage"`
-	InformationNotes            []*InformationNote      `json:"informationNotes"`
-	Error                       *ErrorInfo              `json:"error"`
-	SpecialHandlings            []*SpecialHandling      `json:"specialHandlings"`
-	AvailableImages             []*AvailableImage       `json:"availableImages"`
-	DeliveryDetails             *DeliveryDetails        `json:"deliveryDetails"`
-	ScanEvents                  []*ScanEvent            `json:"scanEvents"`
-	DateAndTimes                []*DateAndTime          `json:"dateAndTimes"`
-	PackageDetails              *PackageDetails         `json:"packageDetails"`
-	GoodsClassificationCode     string                  `json:"goodsClassificationCode"`
-	HoldAtLocation              *Location               `json:"holdAtLocation"`
-	CustomDeliveryOptions       []*CustomDeliveryOption `json:"customDeliveryOptions"`
-	EstimatedDeliveryTimeWindow *DeliveryWindow         `json:"estimatedDeliveryTimeWindow"`
-	PieceCounts                 []*PieceCount           `json:"pieceCounts"`
-	OriginLocation              *Location               `json:"originLocation"`
-	RecipientInformation        struct {
-		Address Address `json:"address"`
-	} `json:"recipientInformation"`
-	StandardTransitTimeWindow *DeliveryWindow  `json:"standardTransitTimeWindow"`
-	ShipmentDetails           *ShipmentDetails `json:"shipmentDetails"`
-	ReasonDetail              *ReasonDetail    `json:"reasonDetail"`
-	AvailableNotifications    []string         `json:"availableNotifications"`
-	ShipperInformation        struct {
-		Address Address `json:"address"`
+	TrackingNumberInfo            *TrackingNumberInfo     `json:"trackingNumberInfo"`
+	AdditionalTrackingInfo        *AdditionalTrackingInfo `json:"additionalTrackingInfo"`
+	InformationNotes              []*InformationNote      `json:"informationNotes"`
+	ScanEvents                    []*ScanEvent            `json:"scanEvents"`
+	DateAndTimes                  []*DateAndTime          `json:"dateAndTimes"`
+	AvailableImages               []*AvailableImage       `json:"availableImages"`
+	MeterNumber                   string                  `json:"meterNumber"`
+	OriginLocation                *Location               `json:"originLocation"`
+	DestinationLocation           *DestinationLocation    `json:"destinationLocation"`
+	HoldAtLocation                *Location               `json:"holdAtLocation"`
+	GoodsClassificationCode       string                  `json:"goodsClassificationCode"`
+	DeliveryDetails               *DeliveryDetails        `json:"deliveryDetails"`
+	DistanceToDestination         envoy.Dimensioned       `json:"distanceToDestination"`
+	CustomDeliveryOptions         []*CustomDeliveryOption `json:"customDeliveryOptions"`
+	SpecialHandlings              []*SpecialHandling      `json:"specialHandlings"`
+	EstimatedDeliveryTimeWindow   *DeliveryWindow         `json:"estimatedDeliveryTimeWindow"`
+	PackageDetails                *PackageDetails         `json:"packageDetails"`
+	ShipmentDetails               *ShipmentDetails        `json:"shipmentDetails"`
+	PieceCounts                   []*PieceCount           `json:"pieceCounts"`
+	ReturnDetail                  *ReturnDetail           `json:"returnDetail"`
+	ServiceDetail                 *ServiceDetail          `json:"serviceDetail"`
+	ConsolidationDetail           []*ConsolidationDetail  `json:"consolidationDetail"`
+	LastStatusDetail              *StatusDetail           `json:"lastStatusDetail"`
+	LastUpdatedDestinationAddress *Address                `json:"lastUpdatedDestinationAddress"`
+	ShipperInformation            struct {
+		Contact *Contact `json:"contact"`
+		Address *Address `json:"address"`
 	} `json:"shipperInformation"`
-	LastUpdatedDestinationAddress *Address `json:"lastUpdatedDestinationAddress"`
+	RecipientInformation struct {
+		Contact *Contact `json:"contact"`
+		Address Address  `json:"address"`
+	} `json:"recipientInformation"`
+	StandardTransitTimeWindow *DeliveryWindow      `json:"standardTransitTimeWindow"`
+	ReasonDetail              *ReasonDetail        `json:"reasonDetail"`
+	ServiceCommitMessage      ServiceCommitMessage `json:"serviceCommitMessage"`
+	AvailableNotifications    []string             `json:"availableNotifications"`
+	Error                     *ErrorInfo           `json:"error"`
 }
 
 type ShipmentDetails struct {
@@ -398,6 +403,7 @@ type DestinationLocation struct {
 }
 
 type LocationContactAndAddress struct {
+	Address *Address `json:"address"`
 }
 
 type FedexLocationType string
@@ -452,6 +458,8 @@ func (d *EventType) ParcelEventType() envoy.ParcelEventType {
 		return envoy.ParcelEventTypeUnknown
 	}
 }
+
+type Contact struct{}
 
 type Address struct {
 	AddressClassification string   `json:"addressClassification"`
@@ -826,7 +834,7 @@ type Location struct {
 	LocationId                string            `json:"locationId"`
 	LocationType              FedexLocationType `json:"locationType"`
 	LocationContactAndAddress struct {
-		Address Address `json:"address"`
+		Address *Address `json:"address"`
 	} `json:"locationContactAndAddress"`
 }
 

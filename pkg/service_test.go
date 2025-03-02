@@ -11,29 +11,34 @@ func TestDetectCarrier(t *testing.T) {
 		want     Carrier
 	}{
 		{
-			name:     "FedEx 12 digits",
-			tracking: "123456789012",
-			want:     CarrierFedEx,
+			name:     "USPS GS1-128 (91)",
+			tracking: "9102001234567890123456",
+			want:     CarrierUSPS,
 		},
 		{
-			name:     "FedEx 15 digits",
-			tracking: "123456789012345",
-			want:     CarrierFedEx,
+			name:     "USPS GS1-128 (92)",
+			tracking: "9261290339741308689554",
+			want:     CarrierUSPS,
 		},
 		{
-			name:     "FedEx 20 digits",
-			tracking: "12345678901234567890",
-			want:     CarrierFedEx,
+			name:     "USPS GS1-128 (93)",
+			tracking: "9302001234567890123456",
+			want:     CarrierUSPS,
 		},
 		{
-			name:     "UPS 18 digits",
-			tracking: "123456789012345678",
-			want:     CarrierUPS,
+			name:     "USPS First-Class",
+			tracking: "9400123456789012345678",
+			want:     CarrierUSPS,
 		},
 		{
-			name:     "UPS 1Z",
-			tracking: "1Z1234567890123456",
-			want:     CarrierUPS,
+			name:     "USPS Express Int'l",
+			tracking: "EC123456789US",
+			want:     CarrierUSPS,
+		},
+		{
+			name:     "USPS Registered Mail",
+			tracking: "9208123456789012345678",
+			want:     CarrierUSPS,
 		},
 		{
 			name:     "USPS 20 digits",
@@ -41,19 +46,74 @@ func TestDetectCarrier(t *testing.T) {
 			want:     CarrierUSPS,
 		},
 		{
-			name:     "USPS 22 digits",
-			tracking: "1234567890123456789012",
+			name:     "USPS realworld example",
+			tracking: "92001903104186015180053869",
 			want:     CarrierUSPS,
 		},
 		{
-			name:     "DHL 10 digits",
+			name:     "USPS realworld example 2",
+			tracking: "92184903716531000000100565",
+			want:     CarrierUSPS,
+		},
+		{
+			name:     "UPS 1Z",
+			tracking: "1Z1234567890123456",
+			want:     CarrierUPS,
+		},
+		{
+			name:     "UPS Mail Innovations",
+			tracking: "MI1234567890123456",
+			want:     CarrierUPS,
+		},
+		{
+			name:     "UPS Freight",
+			tracking: "H9999999999",
+			want:     CarrierUPS,
+		},
+		{
+			name:     "UPS alternative format",
+			tracking: "T1234567890",
+			want:     CarrierUPS,
+		},
+		{
+			name:     "FedEx Express (12 digits)",
+			tracking: "123456789012",
+			want:     CarrierFedEx,
+		},
+		{
+			name:     "FedEx Ground (96...)",
+			tracking: "9612345678901234567890",
+			want:     CarrierFedEx,
+		},
+		{
+			name:     "FedEx Ground (15 digits)",
+			tracking: "999999999999999",
+			want:     CarrierFedEx,
+		},
+		{
+			name:     "FedEx door tag",
+			tracking: "DT123456789012",
+			want:     CarrierFedEx,
+		},
+		{
+			name:     "DHL Express (10 digits)",
 			tracking: "1234567890",
 			want:     CarrierDHL,
 		},
 		{
-			name:     "Unknown",
-			tracking: "123456789012345678901234567890",
-			want:     CarrierUnknown,
+			name:     "DHL Express (JDD...)",
+			tracking: "JJD1234567890",
+			want:     CarrierDHL,
+		},
+		{
+			name:     "DHL Express (5...)",
+			tracking: "5123456789",
+			want:     CarrierDHL,
+		},
+		{
+			name:     "DHL German",
+			tracking: "JJD123456789012345678",
+			want:     CarrierDHL,
 		},
 	}
 

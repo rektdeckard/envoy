@@ -1,0 +1,405 @@
+{
+  "trackResponse": {
+    "shipment": [
+      {
+        "inquiryNumber": "1ZW701150378674373",
+        "package": [
+          {
+            "trackingNumber": "1ZW701150378674373",
+            "deliveryDate": [
+              { "type": "SDD", "date": "20250219" },
+              { "type": "DEL", "date": "20250218" }
+            ],
+            "deliveryTime": { "type": "DEL", "endTime": "110845" },
+            "activity": [
+              {
+                "location": {
+                  "address": {
+                    "city": "DENVER",
+                    "stateProvince": "CO",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "8003"
+                },
+                "status": {
+                  "type": "D",
+                  "description": "DELIVERED ",
+                  "code": "FS",
+                  "statusCode": "011"
+                },
+                "date": "20250218",
+                "time": "110845",
+                "gmtDate": "20250218",
+                "gmtOffset": "-07:00",
+                "gmtTime": "18:08:45"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Commerce City",
+                    "stateProvince": "CO",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "8003"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Out For Delivery Today",
+                  "code": "OT",
+                  "statusCode": "021"
+                },
+                "date": "20250218",
+                "time": "092600",
+                "gmtDate": "20250218",
+                "gmtOffset": "-07:00",
+                "gmtTime": "16:26:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Commerce City",
+                    "stateProvince": "CO",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "8029"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Loaded on Delivery Vehicle ",
+                  "code": "OF",
+                  "statusCode": "072"
+                },
+                "date": "20250218",
+                "time": "080014",
+                "gmtDate": "20250218",
+                "gmtOffset": "-07:00",
+                "gmtTime": "15:00:14"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Commerce City",
+                    "stateProvince": "CO",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "8029"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Processing at UPS Facility",
+                  "code": "YP",
+                  "statusCode": "071"
+                },
+                "date": "20250218",
+                "time": "044126",
+                "gmtDate": "20250218",
+                "gmtOffset": "-07:00",
+                "gmtTime": "11:41:26"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Commerce City",
+                    "stateProvince": "CO",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "8019"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Arrived at Facility",
+                  "code": "AR",
+                  "statusCode": "005"
+                },
+                "date": "20250218",
+                "time": "002800",
+                "gmtDate": "20250218",
+                "gmtOffset": "-07:00",
+                "gmtTime": "07:28:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Aurora",
+                    "stateProvince": "CO",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "8019"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Departed from Facility",
+                  "code": "DP",
+                  "statusCode": "005"
+                },
+                "date": "20250218",
+                "time": "001100",
+                "gmtDate": "20250218",
+                "gmtOffset": "-07:00",
+                "gmtTime": "07:11:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Aurora",
+                    "stateProvince": "CO",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "3033"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Arrived at Facility",
+                  "code": "AR",
+                  "statusCode": "005"
+                },
+                "date": "20250217",
+                "time": "165500",
+                "gmtDate": "20250217",
+                "gmtOffset": "-07:00",
+                "gmtTime": "23:55:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Kansas City",
+                    "stateProvince": "KS",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "3033"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Departed from Facility",
+                  "code": "DP",
+                  "statusCode": "005"
+                },
+                "date": "20250217",
+                "time": "091100",
+                "gmtDate": "20250217",
+                "gmtOffset": "-06:00",
+                "gmtTime": "15:11:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Kansas City",
+                    "stateProvince": "KS",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "3033"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Arrived at Facility",
+                  "code": "AR",
+                  "statusCode": "005"
+                },
+                "date": "20250217",
+                "time": "085200",
+                "gmtDate": "20250217",
+                "gmtOffset": "-06:00",
+                "gmtTime": "14:52:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Nashville",
+                    "stateProvince": "TN",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "3033"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Departed from Facility",
+                  "code": "DP",
+                  "statusCode": "005"
+                },
+                "date": "20250216",
+                "time": "232600",
+                "gmtDate": "20250217",
+                "gmtOffset": "-06:00",
+                "gmtTime": "05:26:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Nashville",
+                    "stateProvince": "TN",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "3033"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Arrived at Facility",
+                  "code": "AR",
+                  "statusCode": "005"
+                },
+                "date": "20250216",
+                "time": "113900",
+                "gmtDate": "20250216",
+                "gmtOffset": "-06:00",
+                "gmtTime": "17:39:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Atlanta",
+                    "stateProvince": "GA",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "3033"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Departed from Facility",
+                  "code": "DP",
+                  "statusCode": "005"
+                },
+                "date": "20250216",
+                "time": "083400",
+                "gmtDate": "20250216",
+                "gmtOffset": "-05:00",
+                "gmtTime": "13:34:00"
+              },
+              {
+                "location": {
+                  "address": {
+                    "city": "Atlanta",
+                    "stateProvince": "GA",
+                    "countryCode": "US",
+                    "country": "US"
+                  },
+                  "slic": "3033"
+                },
+                "status": {
+                  "type": "I",
+                  "description": "Arrived at Facility",
+                  "code": "OR",
+                  "statusCode": "160"
+                },
+                "date": "20250214",
+                "time": "233056",
+                "gmtDate": "20250215",
+                "gmtOffset": "-05:00",
+                "gmtTime": "04:30:56"
+              },
+              {
+                "location": {
+                  "address": { "countryCode": "US", "country": "US" }
+                },
+                "status": {
+                  "type": "M",
+                  "description": "Shipper created a label, UPS has not received the package yet. ",
+                  "code": "MP",
+                  "statusCode": "003"
+                },
+                "date": "20250214",
+                "time": "142744",
+                "gmtDate": "20250214",
+                "gmtOffset": "-05:00",
+                "gmtTime": "19:27:44"
+              }
+            ],
+            "currentStatus": { "description": "Delivered", "code": "011" },
+            "packageAddress": [
+              {
+                "type": "ORIGIN",
+                "address": {
+                  "city": "DULUTH",
+                  "stateProvince": "GA",
+                  "countryCode": "US",
+                  "country": "US"
+                }
+              },
+              {
+                "type": "DESTINATION",
+                "address": {
+                  "city": "DENVER",
+                  "stateProvince": "CO",
+                  "countryCode": "US",
+                  "country": "US"
+                }
+              }
+            ],
+            "weight": { "unitOfMeasurement": "LBS", "weight": "3.50" },
+            "service": {
+              "code": "518",
+              "levelCode": "003",
+              "description": "UPS Ground"
+            },
+            "referenceNumber": [
+              {
+                "type": "SHIPMENT",
+                "number": "DEL45462113",
+                "code": "01",
+                "description": "Shipper Assigned General"
+              },
+              {
+                "type": "SHIPMENT",
+                "number": "PO#DWS-1287419",
+                "code": "01",
+                "description": "Shipper Assigned General"
+              },
+              {
+                "type": "PACKAGE",
+                "number": "DEL45462113",
+                "code": "01",
+                "description": "Shipper Assigned General"
+              },
+              {
+                "type": "PACKAGE",
+                "number": "PO#DWS-1287419",
+                "code": "01",
+                "description": "Shipper Assigned General"
+              },
+              {
+                "type": "PACKAGE",
+                "number": "DDP",
+                "code": "01",
+                "description": "Shipper Assigned General"
+              },
+              {
+                "type": "PACKAGE",
+                "number": "77-0362371 UPS GROUND",
+                "code": "01",
+                "description": "Shipper Assigned General"
+              },
+              {
+                "type": "PACKAGE",
+                "number": "Y  UPS GROUND",
+                "code": "01",
+                "description": "Shipper Assigned General"
+              }
+            ],
+            "deliveryInformation": {
+              "location": "Delivery Photo",
+              "deliveryPhoto": {
+                "photoCaptureInd": "Y",
+                "photoDispositionCode": "V",
+                "isNonPostalCodeCountry": false
+              }
+            },
+            "dimension": { "unitOfDimension": "IN" },
+            "isSmartPackage": false,
+            "packageCount": 1
+          }
+        ]
+      }
+    ]
+  }
+}

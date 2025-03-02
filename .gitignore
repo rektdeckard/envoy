@@ -30,3 +30,6 @@ desktop.ini
 
 # GoReleaser artifacts
 /dist/
+
+# Local development files
+/scratch/

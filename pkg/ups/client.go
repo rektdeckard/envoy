@@ -142,12 +142,12 @@ func apiErrorResponse(errorResponse string) UpsOauthResponse {
 }
 
 type TokenInfo struct {
-	Issued_at    string `json: "issued_at`
-	Token_type   string `json: "token_type`
-	Client_id    string `json: "client_id`
-	Access_token string `json: "access_token`
-	Expires_in   string `json: "expires_in`
-	Status       string `json: "status`
+	IssuedAt    string `json:"issued_at"`
+	TokenType   string `json:"token_type"`
+	ClientId    string `json:"client_id"`
+	AccessToken string `json:"access_token"`
+	ExpiresIn   string `json:"expires_in"`
+	Status      string `json:"status"`
 }
 
 type UpsOauthResponse struct {

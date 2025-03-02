@@ -1,0 +1,1988 @@
+{
+  "transactionId": "acc1d044-acb6-4e1c-85ba-cf36ffea0976",
+  "output": {
+    "completeTrackResults": [
+      {
+        "trackingNumber": "271278612814",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "271278612814",
+              "trackingNumberUniqueId": "12027~271278612814~FDEG",
+              "carrierCode": "FDXG"
+            },
+            "additionalTrackingInfo": {
+              "nickname": "",
+              "packageIdentifiers": [
+                {
+                  "type": "PURCHASE_ORDER",
+                  "values": ["ADU0001688932"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                }
+              ],
+              "hasAssociatedShipments": false
+            },
+            "shipperInformation": {
+              "contact": {},
+              "address": {
+                "city": "West Chester",
+                "stateOrProvinceCode": "OH",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "recipientInformation": {
+              "contact": {},
+              "address": {
+                "city": "COLUMBIA",
+                "stateOrProvinceCode": "SC",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "latestStatusDetail": {
+              "code": "DL",
+              "derivedCode": "DL",
+              "statusByLocale": "Delivered",
+              "description": "Delivered",
+              "scanLocation": {
+                "city": "Columbia",
+                "stateOrProvinceCode": "SC",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "dateAndTimes": [
+              {
+                "type": "ACTUAL_DELIVERY",
+                "dateTime": "2024-02-26T11:04:57-05:00"
+              },
+              {
+                "type": "ACTUAL_PICKUP",
+                "dateTime": "2024-02-22T00:00:00+00:00"
+              },
+              {
+                "type": "SHIP",
+                "dateTime": "2024-02-22T00:00:00+00:00"
+              },
+              {
+                "type": "ACTUAL_TENDER",
+                "dateTime": "2024-02-22T00:00:00+00:00"
+              },
+              {
+                "type": "ANTICIPATED_TENDER",
+                "dateTime": "2024-02-22T00:00:00+00:00"
+              }
+            ],
+            "availableImages": [
+              {
+                "type": "SIGNATURE_PROOF_OF_DELIVERY"
+              }
+            ],
+            "packageDetails": {
+              "packagingDescription": {
+                "type": "YOUR_PACKAGING",
+                "description": "Package"
+              },
+              "physicalPackagingType": "PACKAGE",
+              "sequenceNumber": "1",
+              "count": "1",
+              "weightAndDimensions": {
+                "weight": [
+                  {
+                    "value": "15.2",
+                    "unit": "LB"
+                  },
+                  {
+                    "value": "6.89",
+                    "unit": "KG"
+                  }
+                ],
+                "dimensions": [
+                  {
+                    "length": 21,
+                    "width": 15,
+                    "height": 9,
+                    "units": "IN"
+                  },
+                  {
+                    "length": 53,
+                    "width": 38,
+                    "height": 22,
+                    "units": "CM"
+                  }
+                ]
+              },
+              "packageContent": []
+            },
+            "shipmentDetails": {
+              "possessionStatus": true
+            },
+            "scanEvents": [
+              {
+                "date": "2024-02-26T11:04:57-05:00",
+                "eventType": "DL",
+                "eventDescription": "Delivered",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "Columbia",
+                  "stateOrProvinceCode": "SC",
+                  "postalCode": "29205",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DL",
+                "derivedStatus": "Delivered"
+              },
+              {
+                "date": "2024-02-26T05:01:00-05:00",
+                "eventType": "OD",
+                "eventDescription": "On FedEx vehicle for delivery",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "COLUMBIA",
+                  "stateOrProvinceCode": "SC",
+                  "postalCode": "29209",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0292",
+                "locationType": "VEHICLE",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-26T04:57:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "COLUMBIA",
+                  "stateOrProvinceCode": "SC",
+                  "postalCode": "29209",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0292",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-24T06:27:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "COLUMBIA",
+                  "stateOrProvinceCode": "SC",
+                  "postalCode": "29209",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0292",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-24T02:23:00-05:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CONCORD",
+                  "stateOrProvinceCode": "NC",
+                  "postalCode": "28027",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "5281",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-23T18:17:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CONCORD",
+                  "stateOrProvinceCode": "NC",
+                  "postalCode": "28027",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0289",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-23T06:30:24-05:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "INDEPENDENCE",
+                  "stateOrProvinceCode": "KY",
+                  "postalCode": "41051",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0406",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-23T03:22:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "INDEPENDENCE",
+                  "stateOrProvinceCode": "KY",
+                  "postalCode": "41051",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0406",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-22T22:30:06-05:00",
+                "eventType": "DP",
+                "eventDescription": "Left FedEx origin facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CINCINNATI",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "45246",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0452",
+                "locationType": "ORIGIN_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-22T17:43:28-05:00",
+                "eventType": "AO",
+                "eventDescription": "Shipment arriving On-Time",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CINCINNATI",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "45246",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0452",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-22T17:38:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CINCINNATI",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "45246",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0452",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-22T08:43:00-05:00",
+                "eventType": "OC",
+                "eventDescription": "Shipment information sent to FedEx",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "postalCode": "45011",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationType": "CUSTOMER",
+                "derivedStatusCode": "IN",
+                "derivedStatus": "Label created"
+              },
+              {
+                "date": "2024-02-22T00:00:00",
+                "eventType": "PU",
+                "eventDescription": "Picked up",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CINCINNATI",
+                  "stateOrProvinceCode": "OH",
+                  "postalCode": "45246",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0452",
+                "locationType": "PICKUP_LOCATION",
+                "derivedStatusCode": "PU",
+                "derivedStatus": "Picked up"
+              }
+            ],
+            "availableNotifications": [],
+            "deliveryDetails": {
+              "actualDeliveryAddress": {
+                "city": "Columbia",
+                "stateOrProvinceCode": "SC",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              },
+              "deliveryAttempts": "0",
+              "receivedByName": "SARUD",
+              "deliveryOptionEligibilityDetails": [
+                {
+                  "option": "INDIRECT_SIGNATURE_RELEASE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REROUTE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RESCHEDULE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RETURN_TO_SHIPPER",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "DISPUTE_DELIVERY",
+                  "eligibility": "POSSIBLY_ELIGIBLE"
+                },
+                {
+                  "option": "SUPPLEMENT_ADDRESS",
+                  "eligibility": "INELIGIBLE"
+                }
+              ]
+            },
+            "originLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "CINCINNATI",
+                  "stateOrProvinceCode": "OH",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              }
+            },
+            "destinationLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "COLUMBIA",
+                  "stateOrProvinceCode": "SC",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationType": "FEDEX_GROUND_TERMINAL"
+            },
+            "lastUpdatedDestinationAddress": {
+              "city": "COLUMBIA",
+              "stateOrProvinceCode": "SC",
+              "countryCode": "US",
+              "residential": false,
+              "countryName": "United States"
+            },
+            "serviceDetail": {
+              "type": "FEDEX_GROUND",
+              "description": "FedEx Ground",
+              "shortDescription": "FG"
+            },
+            "standardTransitTimeWindow": {
+              "window": {
+                "ends": "2024-02-26T00:00:00+00:00"
+              }
+            },
+            "estimatedDeliveryTimeWindow": {
+              "window": {}
+            },
+            "goodsClassificationCode": "",
+            "returnDetail": {}
+          }
+        ]
+      },
+      {
+        "trackingNumber": "281958973124",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "281958973124",
+              "trackingNumberUniqueId": "2460633000~281958973124~FX",
+              "carrierCode": "FDXE"
+            },
+            "additionalTrackingInfo": {
+              "nickname": "",
+              "packageIdentifiers": [
+                {
+                  "type": "PURCHASE_ORDER",
+                  "values": ["0002322537"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                },
+                {
+                  "type": "SHIPPER_REFERENCE",
+                  "values": ["MYGEBSUN"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                }
+              ],
+              "hasAssociatedShipments": false
+            },
+            "shipperInformation": {
+              "contact": {},
+              "address": {
+                "city": "Brooklyn",
+                "stateOrProvinceCode": "NY",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "recipientInformation": {
+              "contact": {},
+              "address": {
+                "city": "DENVER",
+                "stateOrProvinceCode": "CO",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "latestStatusDetail": {
+              "code": "DL",
+              "derivedCode": "DL",
+              "statusByLocale": "Delivered",
+              "description": "Delivered",
+              "scanLocation": {
+                "city": "DENVER",
+                "stateOrProvinceCode": "CO",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "dateAndTimes": [
+              {
+                "type": "ACTUAL_DELIVERY",
+                "dateTime": "2024-11-20T16:15:00-07:00"
+              },
+              {
+                "type": "ACTUAL_PICKUP",
+                "dateTime": "2024-11-18T18:29:00-05:00"
+              },
+              {
+                "type": "SHIP",
+                "dateTime": "2024-11-18T00:00:00+00:00"
+              },
+              {
+                "type": "ACTUAL_TENDER",
+                "dateTime": "2024-11-18T18:29:00-05:00"
+              }
+            ],
+            "availableImages": [
+              {
+                "type": "SIGNATURE_PROOF_OF_DELIVERY"
+              }
+            ],
+            "specialHandlings": [
+              {
+                "type": "DELIVER_WEEKDAY",
+                "description": "Deliver Weekday",
+                "paymentType": "OTHER"
+              },
+              {
+                "type": "RESIDENTIAL_DELIVERY",
+                "description": "Residential Delivery",
+                "paymentType": "OTHER"
+              },
+              {
+                "type": "ADULT_SIGNATURE_REQUIRED",
+                "description": "Adult Signature Required",
+                "paymentType": "OTHER"
+              }
+            ],
+            "packageDetails": {
+              "packagingDescription": {
+                "type": "FEDEX_PAK",
+                "description": "FedEx Pak"
+              },
+              "sequenceNumber": "1",
+              "count": "1",
+              "weightAndDimensions": {
+                "weight": [
+                  {
+                    "value": "1.0",
+                    "unit": "LB"
+                  },
+                  {
+                    "value": "0.45",
+                    "unit": "KG"
+                  }
+                ],
+                "dimensions": [
+                  {
+                    "length": 6,
+                    "width": 7,
+                    "height": 2,
+                    "units": "IN"
+                  },
+                  {
+                    "length": 15,
+                    "width": 17,
+                    "height": 5,
+                    "units": "CM"
+                  }
+                ]
+              },
+              "packageContent": []
+            },
+            "shipmentDetails": {
+              "possessionStatus": true,
+              "weight": [
+                {
+                  "value": "1.0",
+                  "unit": "LB"
+                },
+                {
+                  "value": "0.45",
+                  "unit": "KG"
+                }
+              ]
+            },
+            "scanEvents": [
+              {
+                "date": "2024-11-20T16:15:00-07:00",
+                "eventType": "DL",
+                "eventDescription": "Delivered",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DENVER",
+                  "stateOrProvinceCode": "CO",
+                  "postalCode": "80211",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "DENA",
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DL",
+                "derivedStatus": "Delivered"
+              },
+              {
+                "date": "2024-11-20T08:25:00-07:00",
+                "eventType": "OD",
+                "eventDescription": "On FedEx vehicle for delivery",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DENVER",
+                  "stateOrProvinceCode": "CO",
+                  "postalCode": "80238",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "DENA",
+                "locationType": "VEHICLE",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-20T08:16:00-07:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DENVER",
+                  "stateOrProvinceCode": "CO",
+                  "postalCode": "80238",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "DENA",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-19T17:25:00-07:00",
+                "eventType": "AR",
+                "eventDescription": "At destination sort facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DENVER",
+                  "stateOrProvinceCode": "CO",
+                  "postalCode": "80249",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "DENR",
+                "locationType": "SORT_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-19T16:12:00-06:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "MEMPHIS",
+                  "stateOrProvinceCode": "TN",
+                  "postalCode": "38118",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "MEMH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-19T09:05:00-06:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "MEMPHIS",
+                  "stateOrProvinceCode": "TN",
+                  "postalCode": "38118",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "MEMH",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-18T23:04:00-05:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "NEWARK",
+                  "stateOrProvinceCode": "NJ",
+                  "postalCode": "07114",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "EWRHB",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-18T23:01:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx hub",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "NEWARK",
+                  "stateOrProvinceCode": "NJ",
+                  "postalCode": "07114",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "EWRHB",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-18T21:44:00-05:00",
+                "eventType": "DP",
+                "eventDescription": "Left FedEx origin facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "BROOKLYN",
+                  "stateOrProvinceCode": "NY",
+                  "postalCode": "11232",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "FBTA",
+                "locationType": "ORIGIN_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-18T19:03:00-05:00",
+                "eventType": "AO",
+                "eventDescription": "Shipment arriving On-Time",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "BROOKLYN",
+                  "stateOrProvinceCode": "NY",
+                  "postalCode": "11232",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "FBTA",
+                "locationType": "PICKUP_LOCATION",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-11-18T18:29:00-05:00",
+                "eventType": "PU",
+                "eventDescription": "Picked up",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "BROOKLYN",
+                  "stateOrProvinceCode": "NY",
+                  "postalCode": "11232",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "FBTA",
+                "locationType": "PICKUP_LOCATION",
+                "derivedStatusCode": "PU",
+                "derivedStatus": "Picked up"
+              },
+              {
+                "date": "2024-11-18T16:05:08-06:00",
+                "eventType": "OC",
+                "eventDescription": "Shipment information sent to FedEx",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "residential": false
+                },
+                "locationType": "CUSTOMER",
+                "derivedStatusCode": "IN",
+                "derivedStatus": "Label created"
+              }
+            ],
+            "availableNotifications": ["ON_DELIVERY"],
+            "deliveryDetails": {
+              "actualDeliveryAddress": {
+                "city": "DENVER",
+                "stateOrProvinceCode": "CO",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              },
+              "locationType": "RESIDENCE",
+              "locationDescription": "Residence",
+              "deliveryAttempts": "0",
+              "receivedByName": "H.ZHANG",
+              "deliveryOptionEligibilityDetails": [
+                {
+                  "option": "INDIRECT_SIGNATURE_RELEASE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REROUTE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RESCHEDULE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RETURN_TO_SHIPPER",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "DISPUTE_DELIVERY",
+                  "eligibility": "POSSIBLY_ELIGIBLE"
+                },
+                {
+                  "option": "SUPPLEMENT_ADDRESS",
+                  "eligibility": "INELIGIBLE"
+                }
+              ]
+            },
+            "originLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "BROOKLYN",
+                  "stateOrProvinceCode": "NY",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationId": "FBTA"
+            },
+            "destinationLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "DENVER",
+                  "stateOrProvinceCode": "CO",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationType": ""
+            },
+            "lastUpdatedDestinationAddress": {
+              "city": "DENVER",
+              "stateOrProvinceCode": "CO",
+              "countryCode": "US",
+              "residential": false,
+              "countryName": "United States"
+            },
+            "serviceDetail": {
+              "type": "FEDEX_2_DAY",
+              "description": "FedEx 2Day",
+              "shortDescription": "P-2"
+            },
+            "standardTransitTimeWindow": {
+              "window": {
+                "ends": "2024-11-20T20:00:00-07:00"
+              }
+            },
+            "estimatedDeliveryTimeWindow": {
+              "window": {}
+            },
+            "goodsClassificationCode": "",
+            "returnDetail": {}
+          }
+        ]
+      },
+      {
+        "trackingNumber": "271198840120",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "271198840120",
+              "trackingNumberUniqueId": "2460361000~271198840120~FX",
+              "carrierCode": "FDXE"
+            },
+            "additionalTrackingInfo": {
+              "nickname": "",
+              "packageIdentifiers": [
+                {
+                  "type": "SHIPPER_REFERENCE",
+                  "values": ["5027661452-1-1"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                }
+              ],
+              "hasAssociatedShipments": false
+            },
+            "shipperInformation": {
+              "address": {
+                "city": "HUMBLE",
+                "stateOrProvinceCode": "TX",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "recipientInformation": {
+              "address": {
+                "city": "OKLAHOMA CITY",
+                "stateOrProvinceCode": "OK",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "latestStatusDetail": {
+              "code": "DL",
+              "derivedCode": "DL",
+              "statusByLocale": "Delivered",
+              "description": "Delivered",
+              "scanLocation": {
+                "residential": false
+              }
+            },
+            "dateAndTimes": [
+              {
+                "type": "ACTUAL_PICKUP",
+                "dateTime": "2024-02-24T10:38:00+00:00"
+              },
+              {
+                "type": "ACTUAL_DELIVERY",
+                "dateTime": "2024-02-26T09:41:00+00:00"
+              },
+              {
+                "type": "SHIP",
+                "dateTime": "2024-02-24T00:00:00+00:00"
+              }
+            ],
+            "availableImages": [
+              {
+                "type": "SIGNATURE_PROOF_OF_DELIVERY"
+              }
+            ],
+            "specialHandlings": [
+              {
+                "type": "DELIVER_WEEKDAY",
+                "description": "Deliver Weekday",
+                "paymentType": "OTHER"
+              }
+            ],
+            "packageDetails": {
+              "packagingDescription": {
+                "type": ""
+              }
+            },
+            "shipmentDetails": {
+              "possessionStatus": true
+            },
+            "scanEvents": [
+              {
+                "date": "2024-02-26T09:41:00+00:00",
+                "eventType": "DL",
+                "eventDescription": "Delivered",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "OKLAHOMA CITY",
+                  "stateOrProvinceCode": "OK",
+                  "postalCode": "73142",
+                  "countryCode": "US",
+                  "residential": false
+                },
+                "locationId": "TIKA",
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DL",
+                "derivedStatus": "Delivered"
+              }
+            ],
+            "availableNotifications": [],
+            "deliveryDetails": {
+              "actualDeliveryAddress": {
+                "city": "OKLAHOMA CITY",
+                "stateOrProvinceCode": "OK",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              },
+              "deliveryAttempts": "0",
+              "receivedByName": "J.MOORE",
+              "deliveryOptionEligibilityDetails": [
+                {
+                  "option": "INDIRECT_SIGNATURE_RELEASE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REROUTE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RESCHEDULE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RETURN_TO_SHIPPER",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "DISPUTE_DELIVERY",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "SUPPLEMENT_ADDRESS",
+                  "eligibility": "INELIGIBLE"
+                }
+              ]
+            },
+            "originLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "HUMBLE",
+                  "stateOrProvinceCode": "TX",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationId": "HBYKK"
+            },
+            "destinationLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "OKLAHOMA CITY",
+                  "stateOrProvinceCode": "OK",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationType": ""
+            },
+            "serviceDetail": {
+              "type": "STANDARD_OVERNIGHT",
+              "description": "FedEx Standard Overnight",
+              "shortDescription": "SOS"
+            },
+            "standardTransitTimeWindow": {
+              "window": {}
+            },
+            "estimatedDeliveryTimeWindow": {
+              "window": {}
+            },
+            "goodsClassificationCode": "",
+            "returnDetail": {}
+          }
+        ]
+      },
+      {
+        "trackingNumber": "271245206460",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "271245206460",
+              "trackingNumberUniqueId": "12027~271245206460~FDEG",
+              "carrierCode": "FDXG"
+            },
+            "additionalTrackingInfo": {
+              "nickname": "",
+              "packageIdentifiers": [
+                {
+                  "type": "CUSTOMER_REFERENCE",
+                  "values": ["SO-3428181"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                }
+              ],
+              "hasAssociatedShipments": false
+            },
+            "shipperInformation": {
+              "contact": {},
+              "address": {
+                "city": "Cranbury",
+                "stateOrProvinceCode": "NJ",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "recipientInformation": {
+              "contact": {},
+              "address": {
+                "city": "Hellertown",
+                "stateOrProvinceCode": "PA",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "latestStatusDetail": {
+              "code": "DL",
+              "derivedCode": "DL",
+              "statusByLocale": "Delivered",
+              "description": "Delivered",
+              "scanLocation": {
+                "city": "Hellertown",
+                "stateOrProvinceCode": "PA",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "dateAndTimes": [
+              {
+                "type": "ACTUAL_DELIVERY",
+                "dateTime": "2024-02-22T10:07:31-05:00"
+              },
+              {
+                "type": "ACTUAL_PICKUP",
+                "dateTime": "2024-02-21T00:00:00+00:00"
+              },
+              {
+                "type": "SHIP",
+                "dateTime": "2024-02-21T00:00:00+00:00"
+              },
+              {
+                "type": "ACTUAL_TENDER",
+                "dateTime": "2024-02-21T00:00:00+00:00"
+              },
+              {
+                "type": "ANTICIPATED_TENDER",
+                "dateTime": "2024-02-21T00:00:00+00:00"
+              }
+            ],
+            "availableImages": [
+              {
+                "type": "SIGNATURE_PROOF_OF_DELIVERY"
+              }
+            ],
+            "packageDetails": {
+              "packagingDescription": {
+                "type": "YOUR_PACKAGING",
+                "description": "Package"
+              },
+              "physicalPackagingType": "PACKAGE",
+              "sequenceNumber": "1",
+              "count": "1",
+              "weightAndDimensions": {
+                "weight": [
+                  {
+                    "value": "2.0",
+                    "unit": "LB"
+                  },
+                  {
+                    "value": "0.91",
+                    "unit": "KG"
+                  }
+                ],
+                "dimensions": [
+                  {
+                    "length": 14,
+                    "width": 10,
+                    "height": 8,
+                    "units": "IN"
+                  },
+                  {
+                    "length": 35,
+                    "width": 25,
+                    "height": 20,
+                    "units": "CM"
+                  }
+                ]
+              },
+              "packageContent": []
+            },
+            "shipmentDetails": {
+              "possessionStatus": true
+            },
+            "scanEvents": [
+              {
+                "date": "2024-02-22T10:07:31-05:00",
+                "eventType": "DL",
+                "eventDescription": "Delivered",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "Hellertown",
+                  "stateOrProvinceCode": "PA",
+                  "postalCode": "18055",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DL",
+                "derivedStatus": "Delivered"
+              },
+              {
+                "date": "2024-02-22T06:27:00-05:00",
+                "eventType": "OD",
+                "eventDescription": "On FedEx vehicle for delivery",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "NORTHAMPTON",
+                  "stateOrProvinceCode": "PA",
+                  "postalCode": "18067",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0181",
+                "locationType": "VEHICLE",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-22T06:17:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "NORTHAMPTON",
+                  "stateOrProvinceCode": "PA",
+                  "postalCode": "18067",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0181",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-22T00:48:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "NORTHAMPTON",
+                  "stateOrProvinceCode": "PA",
+                  "postalCode": "18067",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0182",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-21T21:47:34-05:00",
+                "eventType": "DP",
+                "eventDescription": "Left FedEx origin facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DAYTON",
+                  "stateOrProvinceCode": "NJ",
+                  "postalCode": "08810",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0085",
+                "locationType": "ORIGIN_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-21T18:12:06-05:00",
+                "eventType": "AO",
+                "eventDescription": "Shipment arriving On-Time",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DAYTON",
+                  "stateOrProvinceCode": "NJ",
+                  "postalCode": "08810",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0085",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-21T18:10:00-05:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DAYTON",
+                  "stateOrProvinceCode": "NJ",
+                  "postalCode": "08810",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0085",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-21T15:03:00-05:00",
+                "eventType": "PU",
+                "eventDescription": "Picked up",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "DAYTON",
+                  "stateOrProvinceCode": "NJ",
+                  "postalCode": "08810",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0085",
+                "locationType": "PICKUP_LOCATION",
+                "derivedStatusCode": "PU",
+                "derivedStatus": "Picked up"
+              },
+              {
+                "date": "2024-02-21T12:49:00-05:00",
+                "eventType": "OC",
+                "eventDescription": "Shipment information sent to FedEx",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "postalCode": "08512",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationType": "CUSTOMER",
+                "derivedStatusCode": "IN",
+                "derivedStatus": "Label created"
+              }
+            ],
+            "availableNotifications": [],
+            "deliveryDetails": {
+              "actualDeliveryAddress": {
+                "city": "Hellertown",
+                "stateOrProvinceCode": "PA",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              },
+              "deliveryAttempts": "0",
+              "receivedByName": "MMARR",
+              "deliveryOptionEligibilityDetails": [
+                {
+                  "option": "INDIRECT_SIGNATURE_RELEASE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REROUTE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RESCHEDULE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RETURN_TO_SHIPPER",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "DISPUTE_DELIVERY",
+                  "eligibility": "POSSIBLY_ELIGIBLE"
+                },
+                {
+                  "option": "SUPPLEMENT_ADDRESS",
+                  "eligibility": "INELIGIBLE"
+                }
+              ]
+            },
+            "originLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "DAYTON",
+                  "stateOrProvinceCode": "NJ",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              }
+            },
+            "destinationLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "Hellertown",
+                  "stateOrProvinceCode": "PA",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationType": "FEDEX_GROUND_TERMINAL"
+            },
+            "lastUpdatedDestinationAddress": {
+              "city": "HELLERTOWN",
+              "stateOrProvinceCode": "PA",
+              "countryCode": "US",
+              "residential": false,
+              "countryName": "United States"
+            },
+            "serviceDetail": {
+              "type": "FEDEX_GROUND",
+              "description": "FedEx Ground",
+              "shortDescription": "FG"
+            },
+            "standardTransitTimeWindow": {
+              "window": {
+                "ends": "2024-02-22T00:00:00+00:00"
+              }
+            },
+            "estimatedDeliveryTimeWindow": {
+              "window": {}
+            },
+            "goodsClassificationCode": "",
+            "returnDetail": {}
+          }
+        ]
+      },
+      {
+        "trackingNumber": "271163815798",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "271163815798",
+              "trackingNumberUniqueId": "12027~271163815798~FDEG",
+              "carrierCode": "FDXG"
+            },
+            "additionalTrackingInfo": {
+              "nickname": "",
+              "packageIdentifiers": [
+                {
+                  "type": "CUSTOMER_REFERENCE",
+                  "values": ["10-11204-01739"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                },
+                {
+                  "type": "PURCHASE_ORDER",
+                  "values": ["MT020025"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                },
+                {
+                  "type": "DEPARTMENT",
+                  "values": ["SO24022050060"],
+                  "trackingNumberUniqueId": "",
+                  "carrierCode": ""
+                }
+              ],
+              "hasAssociatedShipments": false
+            },
+            "shipperInformation": {
+              "contact": {},
+              "address": {
+                "city": "Ontario",
+                "stateOrProvinceCode": "CA",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "recipientInformation": {
+              "contact": {},
+              "address": {
+                "city": "phoenix",
+                "stateOrProvinceCode": "AZ",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              }
+            },
+            "latestStatusDetail": {
+              "code": "DL",
+              "derivedCode": "DL",
+              "statusByLocale": "Delivered",
+              "description": "Delivered",
+              "scanLocation": {
+                "city": "Phoenix",
+                "stateOrProvinceCode": "AZ",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              },
+              "ancillaryDetails": [
+                {
+                  "reason": "014",
+                  "reasonDescription": "Left at front door.Signature Service not requested.",
+                  "action": "",
+                  "actionDescription": ""
+                }
+              ]
+            },
+            "dateAndTimes": [
+              {
+                "type": "ACTUAL_DELIVERY",
+                "dateTime": "2024-02-22T11:34:32-07:00"
+              },
+              {
+                "type": "ACTUAL_PICKUP",
+                "dateTime": "2024-02-20T00:00:00+00:00"
+              },
+              {
+                "type": "SHIP",
+                "dateTime": "2024-02-20T00:00:00+00:00"
+              },
+              {
+                "type": "ACTUAL_TENDER",
+                "dateTime": "2024-02-20T00:00:00+00:00"
+              },
+              {
+                "type": "ANTICIPATED_TENDER",
+                "dateTime": "2024-02-19T00:00:00+00:00"
+              }
+            ],
+            "availableImages": [],
+            "packageDetails": {
+              "packagingDescription": {
+                "type": "YOUR_PACKAGING",
+                "description": "Package"
+              },
+              "physicalPackagingType": "PACKAGE",
+              "sequenceNumber": "1",
+              "count": "1",
+              "weightAndDimensions": {
+                "weight": [
+                  {
+                    "value": "18.9",
+                    "unit": "LB"
+                  },
+                  {
+                    "value": "8.57",
+                    "unit": "KG"
+                  }
+                ],
+                "dimensions": [
+                  {
+                    "length": 17,
+                    "width": 15,
+                    "height": 14,
+                    "units": "IN"
+                  },
+                  {
+                    "length": 43,
+                    "width": 38,
+                    "height": 35,
+                    "units": "CM"
+                  }
+                ]
+              },
+              "packageContent": []
+            },
+            "shipmentDetails": {
+              "possessionStatus": true
+            },
+            "scanEvents": [
+              {
+                "date": "2024-02-22T11:34:32-07:00",
+                "eventType": "DL",
+                "eventDescription": "Delivered",
+                "exceptionCode": "014",
+                "exceptionDescription": "Left at front door. Signature Service not requested.",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "Phoenix",
+                  "stateOrProvinceCode": "AZ",
+                  "postalCode": "85041",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationType": "DELIVERY_LOCATION",
+                "derivedStatusCode": "DL",
+                "derivedStatus": "Delivered"
+              },
+              {
+                "date": "2024-02-22T05:47:00-07:00",
+                "eventType": "OD",
+                "eventDescription": "On FedEx vehicle for delivery",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "PHOENIX",
+                  "stateOrProvinceCode": "AZ",
+                  "postalCode": "85043",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0851",
+                "locationType": "VEHICLE",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-22T05:41:00-07:00",
+                "eventType": "AR",
+                "eventDescription": "At local FedEx facility",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "PHOENIX",
+                  "stateOrProvinceCode": "AZ",
+                  "postalCode": "85043",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0851",
+                "locationType": "DESTINATION_FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-21T21:17:00-07:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "PHOENIX",
+                  "stateOrProvinceCode": "AZ",
+                  "postalCode": "85043",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0850",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-21T07:18:39-08:00",
+                "eventType": "DP",
+                "eventDescription": "Departed FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CHINO",
+                  "stateOrProvinceCode": "CA",
+                  "postalCode": "91710",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0917",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-20T17:49:38-08:00",
+                "eventType": "AO",
+                "eventDescription": "Shipment arriving On-Time",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CHINO",
+                  "stateOrProvinceCode": "CA",
+                  "postalCode": "91710",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0917",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-20T17:48:00-08:00",
+                "eventType": "AR",
+                "eventDescription": "Arrived at FedEx location",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CHINO",
+                  "stateOrProvinceCode": "CA",
+                  "postalCode": "91710",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0917",
+                "locationType": "FEDEX_FACILITY",
+                "derivedStatusCode": "IT",
+                "derivedStatus": "In transit"
+              },
+              {
+                "date": "2024-02-20T12:39:00-08:00",
+                "eventType": "PU",
+                "eventDescription": "Picked up",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "city": "CHINO",
+                  "stateOrProvinceCode": "CA",
+                  "postalCode": "91710",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationId": "0916",
+                "locationType": "PICKUP_LOCATION",
+                "derivedStatusCode": "PU",
+                "derivedStatus": "Picked up"
+              },
+              {
+                "date": "2024-02-19T15:57:00-08:00",
+                "eventType": "OC",
+                "eventDescription": "Shipment information sent to FedEx",
+                "exceptionCode": "",
+                "exceptionDescription": "",
+                "scanLocation": {
+                  "streetLines": [""],
+                  "postalCode": "91761",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                },
+                "locationType": "CUSTOMER",
+                "derivedStatusCode": "IN",
+                "derivedStatus": "Label created"
+              }
+            ],
+            "availableNotifications": [],
+            "deliveryDetails": {
+              "actualDeliveryAddress": {
+                "city": "Phoenix",
+                "stateOrProvinceCode": "AZ",
+                "countryCode": "US",
+                "residential": false,
+                "countryName": "United States"
+              },
+              "deliveryAttempts": "0",
+              "receivedByName": "Signature not required",
+              "deliveryOptionEligibilityDetails": [
+                {
+                  "option": "INDIRECT_SIGNATURE_RELEASE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REDIRECT_TO_HOLD_AT_LOCATION",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "REROUTE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RESCHEDULE",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "RETURN_TO_SHIPPER",
+                  "eligibility": "INELIGIBLE"
+                },
+                {
+                  "option": "DISPUTE_DELIVERY",
+                  "eligibility": "POSSIBLY_ELIGIBLE"
+                },
+                {
+                  "option": "SUPPLEMENT_ADDRESS",
+                  "eligibility": "INELIGIBLE"
+                }
+              ]
+            },
+            "originLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "CHINO",
+                  "stateOrProvinceCode": "CA",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              }
+            },
+            "destinationLocation": {
+              "locationContactAndAddress": {
+                "address": {
+                  "city": "phoenix",
+                  "stateOrProvinceCode": "AZ",
+                  "countryCode": "US",
+                  "residential": false,
+                  "countryName": "United States"
+                }
+              },
+              "locationType": "FEDEX_GROUND_TERMINAL"
+            },
+            "lastUpdatedDestinationAddress": {
+              "city": "PHOENIX",
+              "stateOrProvinceCode": "AZ",
+              "countryCode": "US",
+              "residential": false,
+              "countryName": "United States"
+            },
+            "serviceDetail": {
+              "type": "GROUND_HOME_DELIVERY",
+              "description": "FedEx Home Delivery",
+              "shortDescription": "HD"
+            },
+            "standardTransitTimeWindow": {
+              "window": {
+                "ends": "2024-02-22T00:00:00+00:00"
+              }
+            },
+            "estimatedDeliveryTimeWindow": {
+              "window": {}
+            },
+            "goodsClassificationCode": "",
+            "returnDetail": {}
+          }
+        ]
+      },
+      {
+        "trackingNumber": "391250281789",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "391250281789",
+              "trackingNumberUniqueId": "",
+              "carrierCode": ""
+            },
+            "error": {
+              "code": "TRACKING.TRACKINGNUMBER.NOTFOUND",
+              "message": "The tracking number you entered can't be found right now. Please check the number with the shipper or try again later."
+            }
+          }
+        ]
+      },
+      {
+        "trackingNumber": " 397937838031",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": " 397937838031",
+              "trackingNumberUniqueId": "",
+              "carrierCode": ""
+            },
+            "error": {
+              "code": "TRACKING.TRACKINGNUMBER.NOTFOUND",
+              "message": "The tracking number you entered can't be found right now. Please check the number with the shipper or try again later."
+            }
+          }
+        ]
+      },
+      {
+        "trackingNumber": " 397937838031",
+        "trackResults": [
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": " 397937838031",
+              "trackingNumberUniqueId": "",
+              "carrierCode": ""
+            },
+            "error": {
+              "code": "TRACKING.TRACKINGNUMBER.NOTFOUND",
+              "message": "The tracking number you entered can't be found right now. Please check the number with the shipper or try again later."
+            }
+          },
+          {
+            "trackingNumberInfo": {
+              "trackingNumber": "61290329131520252293",
+              "trackingNumberUniqueId": "",
+              "carrierCode": ""
+            },
+            "error": {
+              "code": "TRACKING.TRACKINGNUMBER.NOTFOUND",
+              "message": "The tracking number you entered can't be found right now. Please check the number with the shipper or try again later."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

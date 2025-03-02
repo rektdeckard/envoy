@@ -25,149 +25,33 @@ const (
 )
 
 var (
-	baseStyle                    = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder())
-	successStyle                 = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(2))
-	errorStyle                   = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(1))
+	baseStyle = lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder())
 	tableWithActiveSelectedStyle = func() table.Styles {
 		s := table.DefaultStyles()
 		s.Header = s.Header.
 			BorderStyle(lipgloss.NormalBorder()).
-			BorderBottom(true)
+			BorderBottom(true).
+			Bold(false)
 		s.Selected = s.Selected.
 			Foreground(lipgloss.ANSIColor(0)).
-			Background(lipgloss.ANSIColor(3))
+			Background(lipgloss.ANSIColor(3)).
+			Bold(false)
 		return s
 	}()
 	tableWithInctiveSelectedStyle = func() table.Styles {
 		s := tableWithActiveSelectedStyle
 		s.Selected = s.Selected.
 			Foreground(lipgloss.ANSIColor(7)).
-			Background(lipgloss.ANSIColor(8))
+			Background(lipgloss.ANSIColor(8)).
+			Bold(false)
 		return s
 	}()
 )
 
 func runTUI(groups map[envoy.Carrier][]string) {
-	client := http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	wg := sync.WaitGroup{}
-	allParcels := make(map[string]*envoy.Parcel)
-
-	for carrier, trackingNumbers := range groups {
-		var svc envoy.Service
-
-		switch carrier {
-		case envoy.CarrierFedEx:
-			svc = fedex.NewFedexService(
-				&client,
-				os.Getenv("FEDEX_API_KEY"),
-				os.Getenv("FEDEX_API_SECRET"),
-			)
-		case envoy.CarrierUPS:
-			svc = ups.NewUPSService(
-				&http.Client{},
-				os.Getenv("UPS_CLIENT_ID"),
-				os.Getenv("UPS_CLIENT_SECRET"),
-			)
-
-		default:
-			fmt.Printf("Unsupported carrier: %v\n", carrier)
-			os.Exit(1)
-		}
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			parcels, err := svc.Track(trackingNumbers)
-			if err != nil {
-				fmt.Printf("Err: %+v\n", err)
-			}
-			for _, p := range parcels {
-				if e := p.LastTrackingEvent(); e != nil {
-					allParcels[p.TrackingNumber] = &p
-				}
-			}
-		}()
-	}
-
-	wg.Wait()
-
-	columns := []table.Column{
-		{Title: "PARCEL NAME", Width: 16},
-		{Title: "CARRIER", Width: 8},
-		{Title: "TRACKING NO.", Width: 16},
-		{Title: "STATUS", Width: 16},
-		{Title: "DATE", Width: 28},
-	}
-
-	var rows []table.Row
-	for _, p := range allParcels {
-		if p.Name == "" {
-			p.Name = p.TrackingNumber
-		}
-		name := p.Name
-		status := strings.ToUpper(p.LastTrackingEvent().Description)
-		// if p.Delivered {
-		// 	status = successStyle.Render(status)
-		// }
-		rows = append(rows, table.Row{
-			name,
-			string(p.Carrier),
-			p.TrackingNumber,
-			status,
-			p.LastTrackingEvent().Timestamp.Format(timeFormat),
-		})
-	}
-
-	t := table.New(
-		table.WithStyles(tableWithActiveSelectedStyle),
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(7),
-	)
-
-	eColumns := []table.Column{
-		{Title: "EVENT", Width: 16},
-		{Title: "LOCATION", Width: 16},
-		{Title: "DATE", Width: 24},
-		{Title: "NOTES", Width: 30},
-	}
-	var eRows []table.Row
-	keys := make([]string, 0, len(allParcels))
-	for k := range allParcels {
-		keys = append(keys, k)
-	}
-	if len(keys) > 0 {
-		for _, p := range allParcels[keys[0]].TrackingEvents {
-			eRows = append(eRows, table.Row{
-				string(p.Type),
-				p.Location,
-				p.Timestamp.Format(timeFormat),
-				p.Description,
-			})
-		}
-	}
-
-	s2 := tableWithInctiveSelectedStyle
-	t2 := table.New(
-		table.WithStyles(s2),
-		table.WithColumns(eColumns),
-		table.WithRows(eRows),
-		table.WithFocused(false),
-		table.WithHeight(9),
-	)
-
-	zone.NewGlobal()
-
 	p := tea.NewProgram(
-		model{
-			parcels:      allParcels,
-			parcelsTable: t,
-			eventsTable:  t2,
-		},
+		initialModel(groups),
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
@@ -184,7 +68,12 @@ const (
 	viewEvents
 )
 
+type fetchMsg struct {
+	parcels map[string]*envoy.Parcel
+}
+
 type model struct {
+	client           *http.Client
 	parcels          map[string]*envoy.Parcel
 	parcelsSelection map[int]struct{}
 	currentView      view
@@ -193,8 +82,15 @@ type model struct {
 }
 
 func (m model) Init() tea.Cmd {
+	zone.NewGlobal()
 	m.parcelsTable.Focus()
-	return nil
+
+	ids := make([]string, 0, len(m.parcels))
+	for _, p := range m.parcels {
+		ids = append(ids, p.TrackingNumber)
+	}
+	groups := groupByCarrier(ids)
+	return initParcels(m.client, groups)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -210,17 +106,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	switch msg := msg.(type) {
+	case fetchMsg:
+		for _, p := range msg.parcels {
+			if e := p.LastTrackingEvent(); e != nil {
+				m.parcels[p.TrackingNumber] = p
+			}
+		}
 	case tea.WindowSizeMsg:
 		w, h := baseStyle.GetFrameSize()
 
 		m.parcelsTable.SetWidth(msg.Width - w - 2)
 		cols := m.parcelsTable.Columns()
-		cols[len(cols)-1].Width = msg.Width - w - 2 - 66
+		cols[len(cols)-1].Width = msg.Width - w - 68
 		m.parcelsTable.SetColumns(cols)
 
 		m.eventsTable.SetWidth(msg.Width - w - 2)
 		cols = m.eventsTable.Columns()
-		cols[len(cols)-1].Width = msg.Width - w - 2 - 64
+		cols[len(cols)-1].Width = msg.Width - w - 66
 		m.eventsTable.SetColumns(cols)
 		m.eventsTable.SetHeight(msg.Height - (2 * h) - m.parcelsTable.Height() - 7)
 	case tea.KeyMsg:
@@ -230,10 +132,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab":
 			cmd := m.toggleView()
 			cmds = append(cmds, cmd)
-		case "enter":
+		case "enter", "l", "right":
 			cmd := m.setEventsView()
 			cmds = append(cmds, cmd)
-		case "esc":
+		case "esc", "h", "left":
 			cmd := m.setParcelsView()
 			cmds = append(cmds, cmd)
 		case "o":
@@ -242,7 +144,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				open.Run(parcel.TrackingURL)
 			}
 		}
-
 		if len(m.parcels) > 0 && key.Matches(msg,
 			m.parcelsTable.KeyMap.LineUp,
 			m.parcelsTable.KeyMap.LineDown,
@@ -256,7 +157,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			parcel := m.parcels[m.parcelsTable.SelectedRow()[2]]
 
 			var eRows []table.Row
-			for _, p := range parcel.TrackingEvents {
+			for _, p := range parcel.Data.Events {
 				eRows = append(eRows, table.Row{
 					string(p.Type),
 					p.Location,
@@ -266,7 +167,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.eventsTable.SetRows(eRows)
 		}
-
 	case tea.MouseMsg:
 		if msg.Action != tea.MouseActionRelease || msg.Button != tea.MouseButtonLeft {
 			return m, nil
@@ -288,9 +188,154 @@ func (m model) View() string {
 	return zone.Scan(view)
 }
 
-func initialModel() model {
+func initParcels(client *http.Client, groups map[envoy.Carrier][]string) func() tea.Msg {
+	return func() tea.Msg {
+
+		wg := sync.WaitGroup{}
+		allParcels := make(map[string]*envoy.Parcel)
+
+		for carrier, trackingNumbers := range groups {
+			var svc envoy.Service
+
+			switch carrier {
+			case envoy.CarrierFedEx:
+				svc = fedex.NewFedexService(
+					client,
+					os.Getenv("FEDEX_API_KEY"),
+					os.Getenv("FEDEX_API_SECRET"),
+				)
+			case envoy.CarrierUPS:
+				svc = ups.NewUPSService(
+					&http.Client{},
+					os.Getenv("UPS_CLIENT_ID"),
+					os.Getenv("UPS_CLIENT_SECRET"),
+				)
+
+			default:
+				fmt.Printf("Unsupported carrier: %v\n", carrier)
+				os.Exit(1)
+			}
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				parcels, err := svc.Track(trackingNumbers)
+				if err != nil {
+					fmt.Printf("Err: %+v\n", err)
+				}
+				for _, p := range parcels {
+					if e := p.LastTrackingEvent(); e != nil {
+						allParcels[p.TrackingNumber] = p
+					}
+				}
+			}()
+		}
+
+		wg.Wait()
+		return fetchMsg{parcels: allParcels}
+	}
+}
+
+func makeParcelsTable(parcels []*envoy.Parcel) table.Model {
+	columns := []table.Column{
+		{Title: "PARCEL NAME", Width: 16},
+		{Title: "CARRIER", Width: 8},
+		{Title: "TRACKING NO.", Width: 16},
+		{Title: "STATUS", Width: 16},
+		{Title: "DATE", Width: 28},
+	}
+
+	var rows []table.Row
+	for _, p := range parcels {
+		if p.HasError() {
+			rows = append(rows, table.Row{
+				formatEventIcon(p.LastTrackingEvent()) + " " + p.Name,
+				string(p.Carrier),
+				p.TrackingNumber,
+				errorStyle.Render(p.Error.Error()),
+				time.Now().Format(timeFormat),
+			})
+			continue
+		}
+
+		if p.Name == "" {
+			p.Name = p.TrackingNumber
+		}
+		name := p.Name
+		status := strings.ToUpper(p.LastTrackingEvent().Description)
+		// TODO: figure out conditional styling per cell
+		// if p.Data.Delivered {
+		// 	status = successStyle.Inline(true).Render(status)
+		// }
+		rows = append(rows, table.Row{
+			name,
+			string(p.Carrier),
+			p.TrackingNumber,
+			status,
+			p.LastTrackingEvent().Timestamp.Format(timeFormat),
+		})
+	}
+
+	return table.New(
+		table.WithStyles(tableWithActiveSelectedStyle),
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(true),
+		table.WithHeight(8),
+	)
+}
+
+func makeEventsTable(parcels []*envoy.Parcel) table.Model {
+	eColumns := []table.Column{
+		{Title: "EVENT", Width: 16},
+		{Title: "LOCATION", Width: 16},
+		{Title: "DATE", Width: 24},
+		{Title: "NOTES", Width: 30},
+	}
+	var eRows []table.Row
+	if len(parcels) > 0 {
+		for _, p := range parcels[0].Data.Events {
+			eRows = append(eRows, table.Row{
+				string(p.Type),
+				p.Location,
+				p.Timestamp.Format(timeFormat),
+				p.Description,
+			})
+		}
+	}
+
+	s2 := tableWithInctiveSelectedStyle
+	return table.New(
+		table.WithStyles(s2),
+		table.WithColumns(eColumns),
+		table.WithRows(eRows),
+		table.WithFocused(false),
+		table.WithHeight(9),
+	)
+}
+
+func initialModel(groups map[envoy.Carrier][]string) model {
+	client := http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	allParcels, err := FetchParcels()
+	if err != nil {
+		fmt.Printf("Error fetching parcels: %v\n", err)
+		os.Exit(1)
+	}
+
+	parcelsMap := make(map[string]*envoy.Parcel)
+	for _, p := range allParcels {
+		parcelsMap[p.TrackingNumber] = p
+	}
+
 	return model{
-		currentView: viewParcels,
+		client:       &client,
+		parcels:      parcelsMap,
+		parcelsTable: makeParcelsTable(allParcels),
+		eventsTable:  makeEventsTable(allParcels),
+		currentView:  viewParcels,
 	}
 }
 
