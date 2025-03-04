@@ -1,11 +1,8 @@
 package envoy
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
-
-	"dev.freespoke.com/go-package-tracking"
 )
 
 type Service interface {
@@ -32,9 +29,6 @@ func DetectCarrier(trackingNumber string) Carrier {
 	trackingNumber = strings.ReplaceAll(trackingNumber, " ", "")
 	trackingNumber = strings.ReplaceAll(trackingNumber, "-", "")
 	trackingNumber = strings.ToUpper(trackingNumber)
-
-	p, _ := parcel.Track(trackingNumber)
-	fmt.Printf("p: %+v\n", p)
 
 	// First try to determine carrier by distinctive patterns
 	if isDHL(trackingNumber) {

@@ -18,6 +18,7 @@ import (
 	"github.com/rektdeckard/envoy/pkg"
 	"github.com/rektdeckard/envoy/pkg/fedex"
 	"github.com/rektdeckard/envoy/pkg/ups"
+	"github.com/rektdeckard/envoy/pkg/usps"
 )
 
 const (
@@ -210,7 +211,12 @@ func initParcels(client *http.Client, groups map[envoy.Carrier][]string) func() 
 					os.Getenv("UPS_CLIENT_ID"),
 					os.Getenv("UPS_CLIENT_SECRET"),
 				)
-
+			case envoy.CarrierUSPS:
+				svc = usps.NewUSPSService(
+					&http.Client{},
+					os.Getenv("USPS_CONSUMER_KEY"),
+					os.Getenv("USPS_CONSUMER_SECRET"),
+				)
 			default:
 				fmt.Printf("Unsupported carrier: %v\n", carrier)
 				os.Exit(1)

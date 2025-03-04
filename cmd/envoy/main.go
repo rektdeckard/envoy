@@ -144,6 +144,7 @@ func syncParcels(args []string) (map[string]*envoy.Parcel, error) {
 			parcels, err := svc.Track(trackingNumbers)
 			if err != nil {
 				fmt.Printf("Err: %+v\n", err)
+				return
 			}
 			for _, p := range parcels {
 				if !p.HasData() {

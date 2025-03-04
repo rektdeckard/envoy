@@ -650,61 +650,17 @@ const (
 )
 
 type ScanEvent struct {
-	Date                 LocalDateTime    `json:"date"`
-	EventType            EventType        `json:"eventType"`
-	EventDescription     string           `json:"eventDescription"`
-	ScanLocation         *Address         `json:"scanLocation"`
-	LocationId           string           `json:"locationId"`
-	LocationType         ScanLocationType `json:"locationType"`
-	DerivedStatus        string           `json:"derivedStatus"`
-	DerivedStatusCode    string           `json:"derivedStatusCode"`
-	ExceptionDescription string           `json:"exceptionDescription"`
-	ExceptionCode        string           `json:"exceptionCode"`
-	DelayDetail          *DelayDetail     `json:"delayDetail"`
-}
-
-type LocalDateTime struct {
-	time.Time
-}
-
-func (t *LocalDateTime) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	tz, err := time.Parse(time.RFC3339, s)
-	if err == nil {
-		*t = LocalDateTime{tz}
-		return nil
-	}
-
-	tt, err := time.Parse("2006-01-02T15:04:05", s)
-	if err == nil {
-		*t = LocalDateTime{tt}
-		return nil
-	}
-
-	return err
-}
-
-type LocalDate struct {
-	time.Time
-}
-
-func (t *LocalDate) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	tt, err := time.Parse("2006-01-02", s)
-	if err != nil {
-		return err
-	}
-
-	*t = LocalDate{tt}
-	return nil
+	Date                 envoy.LocalDateTime `json:"date"`
+	EventType            EventType           `json:"eventType"`
+	EventDescription     string              `json:"eventDescription"`
+	ScanLocation         *Address            `json:"scanLocation"`
+	LocationId           string              `json:"locationId"`
+	LocationType         ScanLocationType    `json:"locationType"`
+	DerivedStatus        string              `json:"derivedStatus"`
+	DerivedStatusCode    string              `json:"derivedStatusCode"`
+	ExceptionDescription string              `json:"exceptionDescription"`
+	ExceptionCode        string              `json:"exceptionCode"`
+	DelayDetail          *DelayDetail        `json:"delayDetail"`
 }
 
 type ScanLocationType string

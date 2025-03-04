@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rektdeckard/envoy/pkg"
@@ -39,15 +41,15 @@ func (s *USPSService) Reauthenticate() error {
 	const endpoint = "/oauth2/v3/token"
 
 	data, err := json.Marshal(struct {
-		grantType    string `json:"grant_type"`
-		clientID     string `json:"client_id"`
-		clientSecret string `json:"client_secret"`
-		scope        string `json:"scope"`
+		GrantType    string `json:"grant_type"`
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		Scope        string `json:"scope"`
 	}{
-		grantType:    "client_credentials",
-		clientID:     s.ConsumerKey,
-		clientSecret: s.ConsumerSecret,
-		scope:        "tracking",
+		GrantType:    "client_credentials",
+		ClientID:     s.ConsumerKey,
+		ClientSecret: s.ConsumerSecret,
+		Scope:        "tracking",
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal request data: %w", err)
@@ -87,26 +89,37 @@ func (s *USPSService) Reauthenticate() error {
 }
 
 func (s *USPSService) Track(trackingNumbers []string) ([]*envoy.Parcel, error) {
-	resp, err := s.TrackRaw(trackingNumbers)
+	responses, err := s.TrackRaw(trackingNumbers)
 	if err != nil {
 		return nil, err
 	}
 
-	parcels := make([]*envoy.Parcel, 0, len(resp.TrackingNumber))
-	// for _, trackingNumber := range resp.TrackingNumber {
-	// 	p := &envoy.Parcel{
-	// 		Name: 		 trackingNumber,
-	// 		Carrier:        envoy.CarrierUSPS,
-	// 		TrackingNumber: trackingNumber,
-	// 		Events:         resp.EventSummaries,
-	// 	}
-	// 	parcels = append(parcels, p)
-	// }
+	parcels := make([]*envoy.Parcel, 0, len(responses))
+	for _, res := range responses {
+		p := &envoy.Parcel{
+			Name:           res.TrackingNumber,
+			Carrier:        envoy.CarrierUSPS,
+			TrackingNumber: res.TrackingNumber,
+			TrackingURL:    "https://tools.usps.com/go/TrackConfirmAction?tLabels=" + res.TrackingNumber,
+			Data: &envoy.ParcelData{
+				Delivered: strings.ToUpper(string(res.StatusCategory)) == "DELIVERED",
+			},
+		}
+		for _, event := range res.TrackingEvents {
+			p.Data.Events = append(p.Data.Events, envoy.ParcelEvent{
+				Type:        event.ParcelEventType(),
+				Description: string(event.EventType),
+				Location:    event.LocationString(),
+				Timestamp:   event.EventTimestamp.Time,
+			})
+		}
+		parcels = append(parcels, p)
+	}
 
 	return parcels, nil
 }
 
-func (s *USPSService) TrackRaw(trackingNumbers []string) (*TrackingResponse, error) {
+func (s *USPSService) TrackRaw(trackingNumbers []string) ([]*TrackingResponse, error) {
 	const endpoint = "/tracking/v3/tracking"
 
 	if s.Token == nil || !s.Token.IsValid() {
@@ -122,77 +135,92 @@ func (s *USPSService) TrackRaw(trackingNumbers []string) (*TrackingResponse, err
 		"Authorization": []string{"Bearer " + s.Token.Value},
 	}
 
-	// TODO: do in a loop for each tracking number
-	u := BaseURL.JoinPath(endpoint, trackingNumbers[0])
-	fmt.Printf("URL: %s\n", u.String())
-	u.RawQuery = params.Encode()
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return nil, err
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+	var trackingResponses []*TrackingResponse
+
+	for _, trackingNumber := range trackingNumbers {
+		wg.Add(1)
+		go func(tn string) {
+			defer wg.Done()
+
+			u := BaseURL.JoinPath(endpoint, tn)
+			u.RawQuery = params.Encode()
+			req, err := http.NewRequest("GET", u.String(), nil)
+			if err != nil {
+				log.Printf("failed to create request: %v", err)
+			}
+
+			req.Header = headers
+
+			res, err := s.Client.Do(req)
+			if err != nil {
+				log.Printf("failed to make request: %v", err)
+			}
+
+			defer res.Body.Close()
+
+			body, err := io.ReadAll(res.Body)
+			if err != nil {
+				log.Printf("failed to read response body: %v", err)
+			}
+			if res.StatusCode != http.StatusOK {
+				log.Printf("unexpected status code: %d", res.StatusCode)
+			}
+
+			var trackingRes TrackingResponse
+			if err := json.Unmarshal(body, &trackingRes); err != nil {
+				log.Printf("failed to unmarshal response: %v", err)
+				// TODO: return errors so TUI can display them
+			} else {
+				mu.Lock()
+				trackingResponses = append(trackingResponses, &trackingRes)
+				mu.Unlock()
+			}
+
+		}(trackingNumber)
 	}
 
-	req.Header = headers
-
-	res, err := s.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-	fmt.Printf("Response: %s\n", string(body))
-
-	var trackingRes TrackingResponse
-	if err := json.Unmarshal(body, &trackingRes); err != nil {
-		return nil, err
-	}
-
-	return &trackingRes, nil
+	wg.Wait()
+	return trackingResponses, nil
 }
 
 // https://developers.usps.com/trackingv3#tag/Resources/operation/get-package-tracking
 type TrackingResponse struct {
-	TrackingNumber              string    `json:"trackingNumber"`
-	AdditionalInfo              string    `json:"additionalInfo"`
-	ADPScripting                string    `json:"ADPScripting"`
-	ArchiveRestoreInfo          string    `json:"archiveRestoreInfo"`
-	AssociatedLabel             string    `json:"associatedLabel"`
-	CarrierRelease              bool      `json:"carrierRelease"`
-	MailClass                   MailClass `json:"mailClass"`
-	DestinationCity             string    `json:"destinationCity"`
-	DestinationCountryCode      string    `json:"destinationCountryCode"`
-	DestinationState            string    `json:"destinationState"`
-	DestinationZIP              string    `json:"destinationZIP"`
-	EditedLabelID               string    `json:"editedLabelId"`
-	EmailEnabled                bool      `json:"emailEnabled"`
-	EndOfDay                    string    `json:"endOfDay"`
-	ESOFEligible                bool      `json:"eSOFEligible"`
-	ExpectedDeliveryTimestamp   time.Time `json:"expectedDeliveryTimestamp"`
-	ExpectedDeliveryType        string    `json:"expectedDeliveryType"`
-	GuaranteedDeliveryTimestamp time.Time `json:"guaranteedDeliveryTimestamp"`
-	GuaranteedDetails           string    `json:"guaranteedDetails"`
-	ItemShape                   ItemShape `json:"itemShape"`
-	KahalaIndicator             bool      `json:"kahalaIndicator"`
-	MailType                    MailType  `json:"mailType"`
+	TrackingNumber              string           `json:"trackingNumber"`
+	AdditionalInfo              string           `json:"additionalInfo"`
+	ADPScripting                string           `json:"ADPScripting"`
+	ArchiveRestoreInfo          string           `json:"archiveRestoreInfo"`
+	AssociatedLabel             string           `json:"associatedLabel"`
+	CarrierRelease              bool             `json:"carrierRelease"`
+	MailClass                   MailClass        `json:"mailClass"`
+	DestinationCity             string           `json:"destinationCity"`
+	DestinationCountryCode      string           `json:"destinationCountryCode"`
+	DestinationState            string           `json:"destinationState"`
+	DestinationZIP              string           `json:"destinationZIP"`
+	EditedLabelID               string           `json:"editedLabelId"`
+	EmailEnabled                envoy.BoolString `json:"emailEnabled"`
+	EndOfDay                    string           `json:"endOfDay"`
+	ESOFEligible                bool             `json:"eSOFEligible"`
+	ExpectedDeliveryTimestamp   time.Time        `json:"expectedDeliveryTimestamp"`
+	ExpectedDeliveryType        string           `json:"expectedDeliveryType"`
+	GuaranteedDeliveryTimestamp time.Time        `json:"guaranteedDeliveryTimestamp"`
+	GuaranteedDetails           string           `json:"guaranteedDetails"`
+	ItemShape                   ItemShape        `json:"itemShape"`
+	KahalaIndicator             envoy.BoolString `json:"kahalaIndicator"`
+	MailType                    MailType         `json:"mailType"`
 	// Deprecated: use [TrackingResponse.MailPieceIntakeDate] instead
 	ApproximateIntakeDate string `json:"approximateIntakeDate"`
 	MailPieceIntakeDate   string `json:"mailPieceIntakeDate"`
 	// Deprecated: use [TrackingResponse.UniqureMailPeiceID] instead
-	UniqueTrackingID       string `json:"uniqueTrackingId"`
-	UniqueMailPieceID      string `json:"uniqueMailPieceId"`
-	OnTime                 bool   `json:"onTime"`
-	OriginCity             string `json:"originCity"`
-	OriginCountry          string `json:"originCountry"`
-	OriginState            string `json:"originState"`
-	OriginZIP              string `json:"originZIP"`
-	ProofOfDeliveryEnabled bool   `json:"proofOfDeliveryEnabled"`
+	UniqueTrackingID       string           `json:"uniqueTrackingId"`
+	UniqueMailPieceID      string           `json:"uniqueMailPieceId"`
+	OnTime                 bool             `json:"onTime"`
+	OriginCity             string           `json:"originCity"`
+	OriginCountry          string           `json:"originCountry"`
+	OriginState            string           `json:"originState"`
+	OriginZIP              string           `json:"originZIP"`
+	ProofOfDeliveryEnabled envoy.BoolString `json:"proofOfDeliveryEnabled"`
 	// Deprecated: use [TrackingResponse.PredictedDeliveryWindowStartTime] and [TrackingResponse.PredictedDeliveryWindowEndTime] instead
 	PredictedDeliveryTimestamp               time.Time                   `json:"predictedDeliveryTimestamp"`
 	PredictedDeliveryDate                    string                      `json:"predictedDeliveryDate"`
@@ -201,9 +229,9 @@ type TrackingResponse struct {
 	RelatedReturnReceiptID                   string                      `json:"relatedReturnReceiptID"`
 	RedeliveryEnabled                        bool                        `json:"redeliveryEnabled"`
 	EnabledNotificationRequests              *NotificationRequests       `json:"enabledNotificationRequests"`
-	RestoreEnabled                           bool                        `json:"restoreEnabled"`
+	RestoreEnabled                           envoy.BoolString            `json:"restoreEnabled"`
 	ReturnDateNotice                         string                      `json:"returnDateNotice"`
-	RRAMEnabled                              bool                        `json:"RRAMEnabled"`
+	RRAMEnabled                              envoy.BoolString            `json:"RRAMEnabled"`
 	Services                                 []ExtraService              `json:"services"`
 	ServiceTypeCode                          ServiceTypeCode             `json:"serviceTypeCode"`
 	Status                                   Status                      `json:"status"`
@@ -366,25 +394,67 @@ type ExtendedRetentionOptions struct {
 }
 
 type TrackingEvent struct {
-	EventType       TrackingEventType `json:"eventType"`
-	EventTimestamp  time.Time         `json:"eventTimestamp"`
-	GMTTimestamp    time.Time         `json:"GMTTimestamp"`
-	GMTOffset       string            `json:"GMTOffset"`
-	EventCountry    string            `json:"eventCountry"`
-	EventCity       string            `json:"eventCity"`
-	EventState      string            `json:"eventState"`
-	EventZIP        string            `json:"eventZIP"`
-	Firm            string            `json:"firm"`
-	Name            string            `json:"name"`
-	AuthorizedAgent bool              `json:"authorizedAgent"`
-	EventCode       TrackingEventCode `json:"eventCode"`
-	ActionCode      ActionCode        `json:"actionCode"`
-	ReasonCode      ReasonCode        `json:"reasonCode"`
+	EventType       TrackingEventType   `json:"eventType"`
+	EventTimestamp  envoy.LocalDateTime `json:"eventTimestamp"`
+	GMTTimestamp    time.Time           `json:"GMTTimestamp"`
+	GMTOffset       string              `json:"GMTOffset"`
+	EventCountry    string              `json:"eventCountry"`
+	EventCity       string              `json:"eventCity"`
+	EventState      string              `json:"eventState"`
+	EventZIP        string              `json:"eventZIP"`
+	Firm            string              `json:"firm"`
+	Name            string              `json:"name"`
+	AuthorizedAgent envoy.BoolString    `json:"authorizedAgent"`
+	EventCode       TrackingEventCode   `json:"eventCode"`
+	ActionCode      ActionCode          `json:"actionCode"`
+	ReasonCode      ReasonCode          `json:"reasonCode"`
 }
 
 type TrackingEventCode string
 
 type TrackingEventType string
+
+func (e *TrackingEvent) ParcelEventType() envoy.ParcelEventType {
+	switch e.EventCode {
+	case "DELIVERY":
+		return envoy.ParcelEventTypeDelivered
+	case "ARRIVAL":
+		return envoy.ParcelEventTypeArrived
+	case "DEPARTURE":
+		return envoy.ParcelEventTypeDeparted
+	case "OUT_FOR_DELIVERY":
+		return envoy.ParcelEventTypeOutForDelivery
+	default:
+		return envoy.ParcelEventTypeUnknown
+	}
+}
+
+func (e *TrackingEvent) LocationString() string {
+	sb := strings.Builder{}
+	if e.EventCity != "" {
+		sb.WriteString(e.EventCity)
+		if e.EventState != "" {
+			sb.WriteString(", ")
+		}
+	}
+	sb.WriteString(e.EventState)
+	if e.EventZIP != "" {
+		if sb.Len() > 0 {
+			sb.WriteString(" ")
+		}
+		sb.WriteString(e.EventZIP)
+	}
+	if e.EventCountry != "" && e.EventCountry != "US" {
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(e.EventCountry)
+	}
+	if sb.Len() == 0 {
+		return "—"
+	}
+	return strings.ToUpper(sb.String())
+}
 
 type ActionCode string
 
