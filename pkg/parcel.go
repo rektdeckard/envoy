@@ -62,10 +62,12 @@ type ParcelEventType string
 
 const (
 	ParcelEventTypeOrderConfirmed         ParcelEventType = "ORDER CONFIRMED"
+	ParcelEventTypeDeliveryUpdated        ParcelEventType = "DELIVERY UPDATED"
 	ParcelEventTypeAssertOnTime           ParcelEventType = "EXPECTED ON TIME"
 	ParcelEventTypePickedUp               ParcelEventType = "PICKED UP"
 	ParcelEventTypeDeparted               ParcelEventType = "DEPARTED"
 	ParcelEventTypeProcessing             ParcelEventType = "PROCESSING"
+	ParcelEventTypeInTransit              ParcelEventType = "IN TRANSIT"
 	ParcelEventTypeArrived                ParcelEventType = "ARRIVED"
 	ParcelEventTypeOnVehicle              ParcelEventType = "ON DELIVERY VEHICLE"
 	ParcelEventTypeOutForDelivery         ParcelEventType = "OUT FOR DELIVERY"
@@ -75,6 +77,7 @@ const (
 	ParcelEventTypeAwaitingCustomerAction ParcelEventType = "AWAITING CUSTOMER ACTION"
 	ParcelEventTypeAwaitingCustomerPickup ParcelEventType = "AWAITING CUSTOMER PICKUP"
 	ParcelEventTypeTransferredToLocal     ParcelEventType = "TRANSFERRED TO LOCAL"
+	ParcelEventTypeException              ParcelEventType = "EXCEPTION"
 	ParcelEventTypeUndeliverable          ParcelEventType = "UNDELIVERABLE"
 	ParcelEventTypeReturnedToSender       ParcelEventType = "RETURNED TO SENDER"
 	ParcelEventTypeUnknown                ParcelEventType = "UNKNOWN"

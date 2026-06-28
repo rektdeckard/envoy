@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"path"
 
 	"github.com/asdine/storm/v3"
@@ -12,7 +11,7 @@ import (
 
 var db *storm.DB
 
-func InitDB(cmd *cobra.Command, args []string) error {
+func initDB(_ *cobra.Command, _ []string) {
 	dir, err := ConfigDir()
 	if err != nil {
 		log.Fatal(err)
@@ -22,10 +21,9 @@ func InitDB(cmd *cobra.Command, args []string) error {
 	if db, err = storm.Open(dbPath); err != nil {
 		log.Fatal(err)
 	}
-	return nil
 }
 
-func FetchParcels() ([]*envoy.Parcel, error) {
+func fetchParcels() ([]*envoy.Parcel, error) {
 	if db == nil {
 		log.Fatal("Error:  DB is not initialized")
 	}
@@ -36,41 +34,41 @@ func FetchParcels() ([]*envoy.Parcel, error) {
 	return parcels, nil
 }
 
-func CreateParcel(p *envoy.Parcel) error {
+func createParcel(p *envoy.Parcel) error {
 	if db == nil {
 		log.Fatal("Error:  DB is not initialized")
 	}
 	return db.Save(p)
 }
 
-func UpdateParcel(p *envoy.Parcel) error {
+func updateParcel(p *envoy.Parcel) error {
 	if db == nil {
 		log.Fatal("Error:  DB is not initialized")
 	}
 	return db.Update(p)
 }
 
-func DeleteParcel(p *envoy.Parcel) error {
+func deleteParcel(p *envoy.Parcel) error {
 	if db == nil {
 		log.Fatal("Error:  DB is not initialized")
 	}
 	return db.DeleteStruct(p)
 }
 
-func UpsertParcels(parcels []*envoy.Parcel) error {
+func upsertParcels(parcels []*envoy.Parcel) error {
 	if db == nil {
 		log.Fatal("Error:  DB is not initialized")
 	}
 	for _, p := range parcels {
-		if err := UpsertParcel(p); err != nil {
-			log.Printf("Error upserting parcel %s: %v", p.TrackingNumber, err)
+		if err := upsertParcel(p); err != nil {
+			log.Warnf("Error upserting parcel %s: %v", p.TrackingNumber, err)
 			return err
 		}
 	}
 	return nil
 }
 
-func UpsertParcel(p *envoy.Parcel) error {
+func upsertParcel(p *envoy.Parcel) error {
 	var exists envoy.Parcel
 	err := db.One("TrackingNumber", p.TrackingNumber, &exists)
 

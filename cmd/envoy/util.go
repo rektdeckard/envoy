@@ -14,12 +14,14 @@ func prepend[T any](s []T, v T) []T {
 }
 
 var (
-	successStyle = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(2))
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(1))
-	dimStyle     = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(8))
+	successStyle       = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(2))
+	indeterminateStyle = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(3))
+	errorStyle         = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(1))
+	dimStyle           = lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(8))
 
 	iconDefault   = "•"
 	iconDelivered = successStyle.Inline(true).Render("✓")
+	iconUnknown   = indeterminateStyle.Inline(true).Render("?")
 	iconException = errorStyle.Inline(true).Render("✗")
 
 	ldr = dimStyle.Render("└─┬─")
@@ -33,8 +35,13 @@ func formatEventIcon(e *envoy.ParcelEvent) string {
 	switch e.Type {
 	case envoy.ParcelEventTypeDelivered:
 		return iconDelivered
-	case envoy.ParcelEventTypeUnknown:
+	case envoy.ParcelEventTypeParcelHeld,
+		envoy.ParcelEventTypeReturnedToSender,
+		envoy.ParcelEventTypeUndeliverable,
+		envoy.ParcelEventTypeDelayed:
 		return iconException
+	case envoy.ParcelEventTypeUnknown:
+		return iconUnknown
 	default:
 		return iconDefault
 	}
@@ -59,7 +66,6 @@ func formatEventOneline(nameOrTrackingNumber string, e *envoy.ParcelEvent) strin
 
 // Format the event history for a parcel as a timeline of events
 func formatEventHistory(parcel *envoy.Parcel) string {
-
 	if !parcel.HasData() {
 		return ""
 	}

@@ -454,6 +454,12 @@ func (d *EventType) ParcelEventType() envoy.ParcelEventType {
 		return envoy.ParcelEventTypeOutForDelivery
 	case "DL":
 		return envoy.ParcelEventTypeDelivered
+	case "SE":
+		return envoy.ParcelEventTypeException
+	case "IT":
+		return envoy.ParcelEventTypeInTransit
+	case "DY":
+		return envoy.ParcelEventTypeDeliveryUpdated
 	default:
 		return envoy.ParcelEventTypeUnknown
 	}

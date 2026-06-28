@@ -35,12 +35,12 @@ func DetectCarrier(trackingNumber string) Carrier {
 		return CarrierDHL
 	}
 
-	if isUPS(trackingNumber) {
-		return CarrierUPS
-	}
-
 	if isFedEx(trackingNumber) {
 		return CarrierFedEx
+	}
+
+	if isUPS(trackingNumber) {
+		return CarrierUPS
 	}
 
 	// USPS check comes last as it has many formats, some similar to other carriers

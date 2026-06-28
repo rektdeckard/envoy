@@ -165,7 +165,7 @@ func (s *USPSService) TrackRaw(trackingNumbers []string) ([]*TrackingResponse, e
 				log.Printf("failed to read response body: %v", err)
 			}
 			if res.StatusCode != http.StatusOK {
-				log.Printf("unexpected status code: %d", res.StatusCode)
+				// log.Printf("unexpected status code: %d", res.StatusCode)
 			}
 
 			var trackingRes TrackingResponse

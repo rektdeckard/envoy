@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"path"
 	"runtime"
@@ -28,23 +27,35 @@ func ConfigDir() (string, error) {
 	return dir, nil
 }
 
-func InitConfig() error {
-	if cfg != "" {
+type Config struct {
+	Carriers struct {
+		FedEx CarrierConfig `yaml:"fedex"`
+		UPS   CarrierConfig `yaml:"ups"`
+		USPS  CarrierConfig `yaml:"usps"`
+	}
+}
+
+type CarrierConfig struct {
+	Key    string `yaml:"key"`
+	Secret string `yaml:"secret"`
+	Extra  string `yaml:"extra"`
+}
+
+func initConfig() Config {
+	if confPath != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(cfg)
+		viper.SetConfigFile(confPath)
 	} else {
 		// Find dir directory.
 		dir, err := ConfigDir()
 		if err != nil {
-			return err
+			log.Fatalf("could not locate config dir: %v", err)
 		}
 
 		viper.AddConfigPath(dir)
 		viper.SetConfigName("envoy")
-		viper.SetConfigType("toml")
+		viper.SetConfigType("yaml")
 	}
-
-	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -54,5 +65,12 @@ func InitConfig() error {
 		}
 	}
 
-	return nil
+	viper.AutomaticEnv()
+
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		log.Fatalf("unable to decode config: %v", err)
+	}
+
+	return config
 }

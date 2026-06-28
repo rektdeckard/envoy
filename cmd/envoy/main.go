@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	envoy "github.com/rektdeckard/envoy/pkg"
 	"github.com/rektdeckard/envoy/pkg/fedex"
@@ -17,14 +17,18 @@ import (
 	"github.com/rektdeckard/envoy/pkg/usps"
 )
 
+const version = "0.1.0"
+
 var (
-	cfg     string
-	dbg     bool
-	rootCmd = &cobra.Command{
-		Use:     "envoy",
-		Short:   "Envoy is a command line tool for tracking parcels",
-		PreRunE: Init,
-		Run:     TUI,
+	conf     Config
+	confPath string
+	oneline  bool
+	rootCmd  = &cobra.Command{
+		Use:               "envoy",
+		Short:             "Envoy is a command line tool for tracking parcels",
+		PersistentPreRunE: initApplication,
+		Run:               TUI,
+		Version:           version,
 	}
 	carrierServices = []envoy.Carrier{
 		envoy.CarrierFedEx,
@@ -33,22 +37,17 @@ var (
 	}
 )
 
-func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal(err)
-	}
-
+func init() {
 	rootCmd.PersistentFlags().
 		StringVarP(
-			&cfg,
+			&confPath,
 			"config",
 			"c",
 			"",
 			"Alternate `PATH` to config file",
 		)
-
 	rootCmd.PersistentFlags().
-		BoolVarP(&dbg, "debug", "d", false, "Enable debug mode")
+		StringP("log-level", "l", "warn", "Set log level")
 
 	for _, c := range carrierServices {
 		rootCmd.PersistentFlags().StringSlice(
@@ -58,6 +57,21 @@ func main() {
 		)
 	}
 
+	trackCmd := &cobra.Command{
+		Use:        "track",
+		Short:      "Retrieves the current tracking status for one or more packages",
+		SuggestFor: []string{"tracking", "status"},
+		Args:       cobra.MinimumNArgs(1),
+		ArgAliases: []string{"tracking_number"},
+		Run:        Track,
+	}
+	trackCmd.Flags().BoolVarP(
+		&oneline,
+		"oneline", "o",
+		false,
+		"Display tracking information on a single line",
+	)
+
 	rootCmd.AddCommand(&cobra.Command{
 		Use:        "add",
 		Short:      "Adds a new tracking number(s) to the database",
@@ -65,24 +79,27 @@ func main() {
 		ArgAliases: []string{"tracking_number"},
 		Run:        AddAndRunTUI,
 	})
-	rootCmd.AddCommand(&cobra.Command{
-		Use:        "track",
-		Short:      "Retrieves the current tracking status for one or more packages",
-		SuggestFor: []string{"tracking", "status"},
-		Args:       cobra.MinimumNArgs(1),
-		ArgAliases: []string{"tracking_number"},
-		Run:        Track,
-	})
-
-	rootCmd.Execute()
+	rootCmd.AddCommand(trackCmd)
 }
 
-func Init(cmd *cobra.Command, args []string) error {
-	if err := InitConfig(); err != nil {
-		log.Fatal(err)
-		return err
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatalf("failed to execute", zap.Error(err))
 	}
-	return InitDB(cmd, args)
+}
+
+func initApplication(cmd *cobra.Command, args []string) error {
+	initLogger(cmd)
+	conf = initConfig()
+	initDB(cmd, args)
+
+	if err := godotenv.Load(); err != nil {
+		log.Debugf("could not load .env", zap.Error(err))
+	} else {
+		log.Debugf("loaded .env", zap.Error(err))
+	}
+
+	return nil
 }
 
 func Add(cmd *cobra.Command, args []string) {
@@ -106,6 +123,7 @@ func TUI(cmd *cobra.Command, args []string) {
 
 func syncParcels(args []string) (map[string]*envoy.Parcel, error) {
 	groups := groupByCarrier(args)
+	log.Debugf("Groups: %+v\n", groups)
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -118,20 +136,20 @@ func syncParcels(args []string) (map[string]*envoy.Parcel, error) {
 		case envoy.CarrierFedEx:
 			svc = fedex.NewFedexService(
 				&http.Client{},
-				os.Getenv("FEDEX_API_KEY"),
-				os.Getenv("FEDEX_API_SECRET"),
+				conf.Carriers.FedEx.Key,
+				conf.Carriers.FedEx.Secret,
 			)
 		case envoy.CarrierUPS:
 			svc = ups.NewUPSService(
 				&http.Client{},
-				os.Getenv("UPS_CLIENT_ID"),
-				os.Getenv("UPS_CLIENT_SECRET"),
+				conf.Carriers.UPS.Key,
+				conf.Carriers.UPS.Secret,
 			)
 		case envoy.CarrierUSPS:
 			svc = usps.NewUSPSService(
 				&http.Client{},
-				os.Getenv("USPS_CONSUMER_KEY"),
-				os.Getenv("USPS_CONSUMER_SECRET"),
+				conf.Carriers.USPS.Key,
+				conf.Carriers.USPS.Secret,
 			)
 		default:
 			fmt.Printf("Unsupported carrier: %v\n", carrier)
@@ -154,7 +172,7 @@ func syncParcels(args []string) (map[string]*envoy.Parcel, error) {
 					mu.Lock()
 					allParcels[p.TrackingNumber] = p
 					mu.Unlock()
-					err := UpsertParcel(p)
+					err := upsertParcel(p)
 					if err != nil {
 						fmt.Printf("Error upserting parcel %s: %v\n", p.TrackingNumber, err)
 					}
@@ -168,9 +186,7 @@ func syncParcels(args []string) (map[string]*envoy.Parcel, error) {
 }
 
 func Track(cmd *cobra.Command, args []string) {
-	if err := InitDB(cmd, args); err != nil {
-		log.Fatal(err)
-	}
+	initDB(cmd, args)
 
 	allParcels, err := syncParcels(args)
 	if err != nil {
@@ -182,7 +198,11 @@ func Track(cmd *cobra.Command, args []string) {
 			fmt.Printf("%s: %v\n", id, p.Error)
 			continue
 		}
-		fmt.Println(formatEventHistory(p))
+		if oneline {
+			fmt.Println(formatEventOneline(p.TrackingNumber, p.LastTrackingEvent()))
+		} else {
+			fmt.Println(formatEventHistory(p))
+		}
 	}
 }
 

@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -57,8 +56,7 @@ func runTUI(groups map[envoy.Carrier][]string) {
 		tea.WithMouseCellMotion(),
 	)
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
-		os.Exit(1)
+		log.Fatalf("Alas, there's been an error: %v", err)
 	}
 }
 
@@ -173,7 +171,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	default:
-		panic(fmt.Sprintf("%+v", msg))
+		log.Fatalf("invalid message: %+v", msg)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -202,24 +200,23 @@ func initParcels(client *http.Client, groups map[envoy.Carrier][]string) func() 
 			case envoy.CarrierFedEx:
 				svc = fedex.NewFedexService(
 					client,
-					os.Getenv("FEDEX_API_KEY"),
-					os.Getenv("FEDEX_API_SECRET"),
+					conf.Carriers.FedEx.Key,
+					conf.Carriers.FedEx.Secret,
 				)
 			case envoy.CarrierUPS:
 				svc = ups.NewUPSService(
 					&http.Client{},
-					os.Getenv("UPS_CLIENT_ID"),
-					os.Getenv("UPS_CLIENT_SECRET"),
+					conf.Carriers.UPS.Key,
+					conf.Carriers.UPS.Secret,
 				)
 			case envoy.CarrierUSPS:
 				svc = usps.NewUSPSService(
 					&http.Client{},
-					os.Getenv("USPS_CONSUMER_KEY"),
-					os.Getenv("USPS_CONSUMER_SECRET"),
+					conf.Carriers.USPS.Key,
+					conf.Carriers.USPS.Secret,
 				)
 			default:
-				fmt.Printf("Unsupported carrier: %v\n", carrier)
-				os.Exit(1)
+				log.Fatalf("unsupported carrier: %v\n", carrier)
 			}
 
 			wg.Add(1)
@@ -227,7 +224,7 @@ func initParcels(client *http.Client, groups map[envoy.Carrier][]string) func() 
 				defer wg.Done()
 				parcels, err := svc.Track(trackingNumbers)
 				if err != nil {
-					fmt.Printf("Err: %+v\n", err)
+					log.Infof("error tracking parcels: %+v\n", err)
 				}
 				for _, p := range parcels {
 					if e := p.LastTrackingEvent(); e != nil {
@@ -325,11 +322,28 @@ func initialModel(groups map[envoy.Carrier][]string) model {
 		Timeout: 10 * time.Second,
 	}
 
-	allParcels, err := FetchParcels()
+	allParcels, err := fetchParcels()
 	if err != nil {
-		fmt.Printf("Error fetching parcels: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("error fetching parcels: %v\n", err)
 	}
+	slices.SortStableFunc(allParcels, func(a, b *envoy.Parcel) int {
+		aTime := func() time.Time {
+			if e := a.LastTrackingEvent(); e != nil {
+				return e.Timestamp
+			} else {
+				return time.Time{}
+			}
+		}()
+		bTime := func() time.Time {
+			if e := b.LastTrackingEvent(); e != nil {
+				return e.Timestamp
+			} else {
+				return time.Time{}
+			}
+		}()
+
+		return bTime.Compare(aTime)
+	})
 
 	parcelsMap := make(map[string]*envoy.Parcel)
 	for _, p := range allParcels {
